@@ -113,15 +113,13 @@ function ShareMenu({
     : relativeLink
 
   const shareWhatsApp = () => {
-    const text = encodeURIComponent(`Mira este video: ${file.name}`)
     const url = encodeURIComponent(link)
-    window.open(`https://wa.me/?text=${text}%20${url}`, '_blank')
+    window.open(`https://wa.me/?text=${url}`, '_blank')
     setOpen(false)
   }
 
   const shareInstagram = () => {
-    const text = encodeURIComponent(`Mira este video: ${file.name}`)
-    window.open(`https://instagram.com/share?url=${encodeURIComponent(link)}&text=${text}`, '_blank')
+    window.open(`https://instagram.com/share?url=${encodeURIComponent(link)}`, '_blank')
     setOpen(false)
   }
 
