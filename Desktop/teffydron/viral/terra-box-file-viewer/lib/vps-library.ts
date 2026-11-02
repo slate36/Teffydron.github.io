@@ -12,6 +12,7 @@ import { videoCache } from '@/lib/db/schema'
 
 export const VPS_LIBRARY_PREFIX = '/__vps__'
 const COVER_PREFIX = '__folder_cover__.'
+const HIDDEN_FOLDERS = ['pedro']
 
 const MEDIA_TYPES: Record<string, { category: number; mime: string }> = {
   '.mp4': { category: 1, mime: 'video/mp4' },
@@ -170,7 +171,7 @@ export async function getVpsLibraryEntries(directory: string, userId?: string): 
   const results: TeraboxFile[] = []
 
   for (const entry of entries) {
-    if (entry.isSymbolicLink() || entry.name.startsWith('.') || entry.name.startsWith(COVER_PREFIX)) continue
+    if (entry.isSymbolicLink() || entry.name.startsWith('.') || entry.name.startsWith(COVER_PREFIX) || HIDDEN_FOLDERS.includes(entry.name)) continue
     const relativePath = [safeDirectory, entry.name].filter(Boolean).join('/')
     const fullPath = join(fullDirectory, entry.name)
 
@@ -214,7 +215,7 @@ export async function getVpsLibraryEntries(directory: string, userId?: string): 
 async function scanDirectory(directory: string, folder: string, output: LibraryItem[], userId?: string) {
   const entries = await readdir(directory, { withFileTypes: true })
   for (const entry of entries) {
-    if (entry.isSymbolicLink()) continue
+    if (entry.isSymbolicLink() || HIDDEN_FOLDERS.includes(entry.name)) continue
     const fullPath = join(directory, entry.name)
     const relativePath = [folder, entry.name].filter(Boolean).join('/')
     if (entry.isDirectory()) {
@@ -307,6 +308,8 @@ export async function getVpsSharedStorageBytes(userId?: string) {
 }
 
 export async function getVpsLibraryFile(relativePath: string, includeCover = false, userId?: string) {
+  const firstPart = relativePath.split('/')[0]
+  if (HIDDEN_FOLDERS.includes(firstPart)) throw new Error('Acceso denegado a esta carpeta.')
   const safePath = validatePath(relativePath, false, includeCover)
   const name = safePath.split('/').pop()!
   const isCover = name.startsWith(COVER_PREFIX) && COVER_TYPES.includes(extname(name).toLowerCase())
@@ -330,7 +333,7 @@ async function measureDirectory(directory: string): Promise<number> {
   let bytes = 0
   for (const entry of entries) {
     if (entry.isSymbolicLink()) continue
-    if (entry.name === '.teffydron-storage-quota.lock') continue
+    if (entry.name === '.teffydron-storage-quota.lock' || HIDDEN_FOLDERS.includes(entry.name)) continue
     const fullPath = join(directory, entry.name)
     if (entry.isDirectory()) bytes += await measureDirectory(fullPath)
     else if (entry.isFile()) bytes += (await stat(fullPath)).size
