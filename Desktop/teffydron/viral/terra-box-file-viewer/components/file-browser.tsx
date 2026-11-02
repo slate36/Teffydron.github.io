@@ -472,17 +472,26 @@ export function FileBrowser({ files }: { files: BrowserFile[] }) {
           {filtered.map((file) => {
             const Icon = iconFor(file)
             return (
-              <li key={file.fsId} className="relative">
-                {file.shareHref && (
-                  <QrDialogButton
-                    href={file.shareHref}
-                    title={file.name}
-                    kind={file.isDir ? 'folder' : 'video'}
-                    className="absolute top-2 right-2 z-10"
-                  />
-                )}
+              <li key={file.fsId} className="relative group">
                 {!file.isDir && (
-                  <ShareMenu file={file} className="absolute top-2 right-8 z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <>
+                    {file.shareHref ? (
+                      <QrDialogButton
+                        href={file.shareHref}
+                        title={file.name}
+                        kind={file.isDir ? 'folder' : 'video'}
+                        className="absolute top-2 right-2 z-10"
+                      />
+                    ) : (
+                      <QrDialogButton
+                        href={file.directHref || fileHref(file)}
+                        title={file.name}
+                        kind='video'
+                        className="absolute top-2 right-2 z-10"
+                      />
+                    )}
+                    <ShareMenu file={file} className="absolute top-2 right-8 z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </>
                 )}
                 <ItemLink
                   file={file}
@@ -567,8 +576,12 @@ export function FileBrowser({ files }: { files: BrowserFile[] }) {
                       title={file.name}
                       kind={file.isDir ? 'folder' : 'video'}
                     />
-                  ) : (
-                    <span className="size-8 shrink-0" aria-hidden="true" />
+                  ) : !file.isDir && (
+                    <QrDialogButton
+                      href={file.directHref || fileHref(file)}
+                      title={file.name}
+                      kind='video'
+                    />
                   )}
                 </li>
               )
