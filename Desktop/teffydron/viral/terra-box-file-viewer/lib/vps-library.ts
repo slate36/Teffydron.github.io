@@ -462,6 +462,7 @@ export async function renameVpsLibraryFolder(path: string, name: string, userId?
 }
 
 export async function moveVpsLibraryFile(path: string, destinationFolder: string, userId?: string) {
+  if (path.startsWith('cache/')) throw new Error('No se pueden mover archivos de la caché de TeraBox.')
   await ensureVpsLibraryDirectory(userId)
   const current = validatePath(path, false)
   const destination = validatePath(destinationFolder)
@@ -493,6 +494,7 @@ function validateFolderName(value: string) {
 }
 
 export async function renameVpsLibraryFile(path: string, name: string, userId?: string) {
+  if (path.startsWith('cache/')) throw new Error('No se pueden renombrar archivos de la caché de TeraBox.')
   const current = validatePath(path, false)
   const safeName = validateFileName(name)
   const parent = current.split('/').slice(0, -1).join('/')
