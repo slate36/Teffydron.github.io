@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getViewer } from '@/lib/viewer'
 import {
   createVpsLibraryFolder,
+  deleteVpsLibraryFile,
   getVpsLibrarySnapshot,
   moveVpsLibraryFile,
   renameVpsLibraryFolder,
@@ -19,6 +20,26 @@ export async function GET(request: Request) {
   return NextResponse.json(await getVpsLibrarySnapshot(userId), {
     headers: { 'Cache-Control': 'no-store' },
   })
+}
+
+export async function DELETE(request: Request) {
+  const viewer = await getViewer()
+  if (!viewer) return NextResponse.json({ error: 'No autorizado.' }, { status: 401 })
+
+  const params = new URL(request.url).searchParams
+  const path = params.get('path') ?? ''
+  const userId = params.get('userId') ?? viewer.id
+
+  try {
+    await withVpsLibraryWriteLock(async () => {
+      await deleteVpsLibraryFile(path ?? '', userId)
+    })
+
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'No se pudo eliminar el archivo.'
+    return NextResponse.json({ error: message }, { status: 400 })
+  }
 }
 
 export async function POST(request: Request) {
@@ -44,6 +65,8 @@ export async function POST(request: Request) {
         await renameVpsLibraryFile(body.path ?? '', body.name ?? '', body.userId ?? viewer.id)
       } else if (body.action === 'move-file') {
         await moveVpsLibraryFile(body.path ?? '', body.destination ?? '', body.userId ?? viewer.id)
+      } else if (body.action === 'copy-file') {
+        await copyVpsLibraryFile(body.path ?? '', body.destination ?? '', body.userId ?? viewer.id)
       } else {
         throw new Error('La operación solicitada no es válida.')
       }

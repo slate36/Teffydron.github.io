@@ -1,7 +1,26 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Folder, FolderOpen, ImagePlus, LoaderCircle, Pencil, Upload, Trash2, Search, Film, Music, Image as ImageIcon, File } from 'lucide-react'
+import {
+  Folder,
+  FolderOpen,
+  ImagePlus,
+  LoaderCircle,
+  Pencil,
+  Upload,
+  Trash2,
+  Search,
+  Film,
+  Music,
+  Image as ImageIcon,
+  File,
+  Clipboard,
+  Copy,
+  Download,
+  ArrowLeft,
+  MoreHorizontal,
+  Scissors,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -10,6 +29,7 @@ import { getCurrentUserId } from '@/app/actions/admin'
 type FolderItem = { path: string; name: string }
 type FileItem = { path: string; name: string; size: number; folder: string; modifiedAt: number }
 type Snapshot = { folders: FolderItem[]; files: FileItem[]; usedBytes: number; limitBytes: number }
+type ClipboardItem = { path: string; name: string; action: 'move' | 'copy' }
 
 function formatBytes(bytes: number) {
   if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(0)} MB`
@@ -33,12 +53,15 @@ async function readResponse(response: Response) {
 export function VpsLibraryManager() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null)
   const [selectedFolder, setSelectedFolder] = useState('')
+  const [currentPath, setCurrentPath] = useState('')
   const [newFolderName, setNewFolderName] = useState('')
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [clipboard, setClipboard] = useState<ClipboardItem[]>([])
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; file: FileItem } | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
 
   async function refresh() {
@@ -54,6 +77,12 @@ export function VpsLibraryManager() {
       setError(cause instanceof Error ? cause.message : 'No se pudo cargar la biblioteca.')
     })
   }, [])
+
+  function parentPath(path: string) {
+    const parts = path.split('/').filter(Boolean)
+    parts.pop()
+    return parts.join('/')
+  }
 
   async function mutate(body: Record<string, string>) {
     const userId = await getCurrentUserId()
@@ -75,6 +104,59 @@ export function VpsLibraryManager() {
     }
   }
 
+  async function deleteFile(path: string) {
+    const userId = await getCurrentUserId()
+    if (!window.confirm('¿Eliminar este archivo definitivamente?')) return
+    setBusy(true)
+    setError('')
+    try {
+      await readResponse(await fetch(`/api/admin/library?path=${encodeURIComponent(path)}&userId=${encodeURIComponent(userId ?? '')}`, {
+        method: 'DELETE',
+      }))
+      await refresh()
+      setNotice('Archivo eliminado.')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'No se pudo eliminar el archivo.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function pasteClipboard() {
+    const userId = await getCurrentUserId()
+    setBusy(true)
+    setError('')
+    try {
+      for (const item of clipboard) {
+        const query = new URLSearchParams({
+          path: item.path,
+          destination: currentPath,
+          userId: userId ?? '',
+        })
+        if (item.action === 'copy') {
+          await readResponse(await fetch('/api/admin/library', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'copy-file', ...query }),
+          }))
+        } else {
+          await readResponse(await fetch('/api/admin/library', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'move-file', ...query }),
+          })}
+        }
+      }
+      setClipboard([])
+      await refresh()
+      setNotice('Archivos pegados.')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'No se pudo pegar los archivos.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function uploadFiles(files: FileList | File[]) {
     const userId = await getCurrentUserId()
     const list = Array.from(files)
@@ -85,7 +167,7 @@ export function VpsLibraryManager() {
       const file = list[index]
       setUploading(`Subiendo ${index + 1} de ${list.length}: ${file.name}`)
       try {
-        const query = new URLSearchParams({ folder: selectedFolder, name: file.name, userId: userId ?? '' })
+        const query = new URLSearchParams({ folder: currentPath, name: file.name, userId: userId ?? '' })
         await readResponse(await fetch(`/api/admin/library/upload?${query}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/octet-stream' },
@@ -138,6 +220,11 @@ export function VpsLibraryManager() {
     if (name?.trim()) void mutate({ action: 'rename-file', path, name })
   }
 
+  function handleContextMenu(event: React.MouseEvent, file: FileItem) {
+    event.preventDefault()
+    setContextMenu({ x: event.clientX, y: event.clientY, file })
+  }
+
   function handleDrop(event: React.DragEvent, destination: string) {
     event.preventDefault()
     const path = event.dataTransfer.getData('text/vps-library-file')
@@ -146,21 +233,53 @@ export function VpsLibraryManager() {
 
   const folders = snapshot?.folders ?? []
   const files = snapshot?.files ?? []
-  
-  // Filtrar archivos por búsqueda
-  const filteredFiles = files.filter(file => 
+
+  const currentFolders = folders.filter((folder) => parentPath(folder.path) === currentPath)
+  const currentFiles = files.filter((file) => file.folder === currentPath)
+
+  const filteredFiles = currentFiles.filter((file) =>
     file.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     file.folder.toLowerCase().includes(searchQuery.toLowerCase())
   )
-  
-  // Filtrar carpetas por búsqueda
-  const filteredFolders = folders.filter(folder =>
+  const filteredFolders = currentFolders.filter((folder) =>
     folder.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
+  const canPaste = clipboard.length > 0
+
+  function closeContextMenu() {
+    setContextMenu(null)
+  }
+
+  useEffect(() => {
+    function handleClick() {
+      setContextMenu(null)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
   return (
-    <div className="flex flex-col gap-6">
-      {/* Espacio usado - Grande y claro */}
+    <div className="flex flex-col gap-6" onContextMenu={closeContextMenu}>
+      {/* Navegación */}
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            setCurrentPath(parentPath(currentPath))
+            setContextMenu(null)
+          }}
+          disabled={!currentPath}
+        >
+          <ArrowLeft className="size-4 mr-2" /> Volver
+        </Button>
+        <span className="text-sm text-muted-foreground">
+          {currentPath ? currentPath.split('/').pop() : 'Biblioteca raíz'}
+        </span>
+      </div>
+
+      {/* Espacio usado */}
       <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-primary">Espacio de almacenamiento</h2>
@@ -170,7 +289,7 @@ export function VpsLibraryManager() {
           </div>
         </div>
         <div className="w-full h-4 bg-muted rounded-full overflow-hidden">
-          <div 
+          <div
             className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500"
             style={{ width: `${((snapshot?.usedBytes ?? 0) / (snapshot?.limitBytes ?? 70 * 1024 ** 3)) * 100}%` }}
           />
@@ -188,7 +307,7 @@ export function VpsLibraryManager() {
         />
       </div>
 
-      {/* Subir archivos - Grande y visible */}
+      {/* Subir archivos */}
       <div
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {
@@ -217,8 +336,8 @@ export function VpsLibraryManager() {
             }}
           />
           <select
-            value={selectedFolder}
-            onChange={(event) => setSelectedFolder(event.target.value)}
+            value={currentPath}
+            onChange={(event) => setCurrentPath(event.target.value)}
             className="h-12 px-4 rounded-xl border bg-background text-base min-w-64"
           >
             {folders.map((folder) => (
@@ -236,7 +355,7 @@ export function VpsLibraryManager() {
         )}
       </div>
 
-      {/* Carpetas - Vista de cuadrícula grande */}
+      {/* Carpetas - Doble click para entrar */}
       {filteredFolders.length > 0 && (
         <div>
           <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
@@ -249,32 +368,40 @@ export function VpsLibraryManager() {
                 key={folder.path || 'root'}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={(event) => handleDrop(event, folder.path)}
+                onDoubleClick={() => {
+                  setCurrentPath(folder.path)
+                  setContextMenu(null)
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  setContextMenu({ x: e.clientX, y: e.clientY, file: null as unknown as FileItem })
+                }}
                 className={cn(
-                  'rounded-2xl border-2 bg-card p-6 transition-all hover:shadow-lg hover:border-primary/40 cursor-pointer',
-                  folder.path === selectedFolder ? 'border-primary bg-primary/5' : 'hover:bg-muted/50',
+                  'rounded-2xl border-2 bg-card p-6 transition-all hover:shadow-lg hover:border-primary/40 cursor-pointer group',
+                  currentPath === folder.path ? 'border-primary bg-primary/5' : 'hover:bg-muted/50',
                 )}
-                onClick={() => setSelectedFolder(folder.path)}
               >
                 <div className="flex flex-col items-center gap-3">
                   <div className="rounded-2xl bg-primary/10 p-4">
                     <FolderOpen className="size-12 text-primary" />
                   </div>
                   <div className="text-center">
-                    <p className="font-semibold text-base">{folder.name}</p>
+                    <p className="font-semibold text-base truncate">{folder.name}</p>
                     <p className="text-sm text-muted-foreground">{folder.path || 'Raíz'}</p>
                   </div>
                 </div>
                 <div className="flex gap-2 mt-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     className="flex-1"
                     onClick={(e) => {
                       e.stopPropagation()
-                      setSelectedFolder(folder.path)
+                      setCurrentPath(folder.path)
+                      setContextMenu(null)
                     }}
                   >
-                    Subir aquí
+                    Abrir
                   </Button>
                   {folder.path && (
                     <Button
@@ -298,7 +425,7 @@ export function VpsLibraryManager() {
         </div>
       )}
 
-      {/* Archivos - Vista de galería grande con miniaturas */}
+      {/* Archivos - Doble click para abrir, click derecho para menú */}
       <div>
         <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
           <Folder className="size-6 text-primary" />
@@ -311,15 +438,23 @@ export function VpsLibraryManager() {
                 key={file.path}
                 draggable
                 onDragStart={(event) => event.dataTransfer.setData('text/vps-library-file', file.path)}
+                onDoubleClick={() => {
+                  const userId = getCurrentUserId()
+                  void userId.then((uid) => {
+                    window.open(`/api/library/file?path=${encodeURIComponent(file.path)}&userId=${encodeURIComponent(uid ?? '')}`, '_blank')
+                  })
+                  setContextMenu(null)
+                }}
+                onContextMenu={(event) => handleContextMenu(event, file)}
+                onDrop={(event) => handleDrop(event, currentPath)}
+                onDragOver={(event) => event.preventDefault()}
                 className="group relative rounded-2xl border-2 bg-card overflow-hidden transition-all hover:shadow-lg hover:border-primary/40 cursor-grab"
-                title="Arrastrá este archivo a una carpeta para moverlo"
+                title="Doble click para abrir · Click derecho para más opciones"
               >
-                {/* Miniatura/Icono grande */}
                 <div className="aspect-video bg-muted/30 flex items-center justify-center p-4">
                   {getFileIcon(file.name)}
                 </div>
-                
-                {/* Información del archivo */}
+
                 <div className="p-4">
                   <p className="font-semibold text-base truncate mb-1">{file.name}</p>
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -328,7 +463,6 @@ export function VpsLibraryManager() {
                   </div>
                 </div>
 
-                {/* Botones de acción */}
                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button
                     size="sm"
@@ -354,13 +488,29 @@ export function VpsLibraryManager() {
         )}
       </div>
 
-      {/* Crear carpeta - Grande y claro */}
+      {/* Portapapeles */}
+      {canPaste && (
+        <div className="rounded-2xl border-2 border-accent bg-accent/5 p-4 flex items-center gap-3">
+          <Clipboard className="size-5 text-accent" />
+          <span className="text-sm">{clipboard.length} archivo(s) en el portapapeles</span>
+          <Button
+            size="sm"
+            variant="accent"
+            onClick={() => pasteClipboard()}
+            disabled={busy}
+          >
+            Pegar aquí
+          </Button>
+        </div>
+      )}
+
+      {/* Crear carpeta */}
       <form
         className="flex flex-col gap-4 rounded-2xl border-2 bg-card p-6"
         onSubmit={(event) => {
           event.preventDefault()
           if (!newFolderName.trim()) return
-          void mutate({ action: 'create-folder', parent: selectedFolder, name: newFolderName })
+          void mutate({ action: 'create-folder', parent: currentPath, name: newFolderName })
           setNewFolderName('')
         }}
       >
@@ -369,7 +519,7 @@ export function VpsLibraryManager() {
           <Input
             value={newFolderName}
             onChange={(event) => setNewFolderName(event.target.value)}
-            placeholder={`Nombre de la carpeta (dentro de ${folders.find((folder) => folder.path === selectedFolder)?.name ?? 'raíz'})`}
+            placeholder={`Nombre de la carpeta (dentro de ${currentPath ? currentPath.split('/').pop() : 'raíz'})`}
             className="flex-1 h-12 text-base"
             maxLength={120}
           />
@@ -378,6 +528,103 @@ export function VpsLibraryManager() {
           </Button>
         </div>
       </form>
+
+      {/* Menú contextual */}
+      {contextMenu && (
+        <div
+          className="fixed z-50 rounded-xl border border-white/20 bg-[#164532]/95 backdrop-blur-md shadow-2xl p-2 text-white min-w-[180px]"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {contextMenu.file && (
+            <>
+              <div className="px-3 py-1.5 text-xs text-[#c5a059]/70 uppercase tracking-wider font-semibold truncate">
+                {contextMenu.file.name}
+              </div>
+              <Button
+                variant="ghost"
+                className="w-full text-left text-sm text-white hover:bg-white/10 py-2"
+                onClick={() => {
+                  const userId = getCurrentUserId()
+                  void userId.then((uid) => {
+                    window.open(`/api/library/file?path=${encodeURIComponent(contextMenu.file!.path)}&userId=${encodeURIComponent(uid ?? '')}`, '_blank')
+                  })
+                  setContextMenu(null)
+                }}
+              >
+                <Film className="size-4 mr-2" /> Abrir
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full text-left text-sm text-white hover:bg-white/10 py-2"
+                onClick={() => {
+                  setClipboard([{ path: contextMenu.file!.path, name: contextMenu.file!.name, action: 'move' }])
+                  setContextMenu(null)
+                  setNotice('Archivo cortado.')
+                }}
+              >
+                <Scissors className="size-4 mr-2" /> Cortar
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full text-left text-sm text-white hover:bg-white/10 py-2"
+                onClick={() => {
+                  setClipboard([{ path: contextMenu.file!.path, name: contextMenu.file!.name, action: 'copy' }])
+                  setContextMenu(null)
+                  setNotice('Archivo copiado.')
+                }}
+              >
+                <Copy className="size-4 mr-2" /> Copiar
+              </Button>
+              {canPaste && (
+                <Button
+                  variant="ghost"
+                  className="w-full text-left text-sm text-white hover:bg-white/10 py-2"
+                  onClick={() => {
+                    void pasteClipboard()
+                    setContextMenu(null)
+                  }}
+                >
+                  <Clipboard className="size-4 mr-2" /> Pegar aquí
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                className="w-full text-left text-sm text-white hover:bg-white/10 py-2"
+                onClick={() => {
+                  renameFile(contextMenu.file!.path, contextMenu.file!.name)
+                  setContextMenu(null)
+                }}
+              >
+                <Pencil className="size-4 mr-2" /> Renombrar
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full text-left text-sm text-white hover:bg-white/10 py-2 text-destructive"
+                onClick={() => {
+                  deleteFile(contextMenu.file!.path)
+                  setContextMenu(null)
+                }}
+              >
+                <Trash2 className="size-4 mr-2" /> Eliminar
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full text-left text-sm text-white hover:bg-white/10 py-2"
+                onClick={() => {
+                  const userId = getCurrentUserId()
+                  void userId.then((uid) => {
+                    window.open(`/api/library/file?path=${encodeURIComponent(contextMenu.file!.path)}&userId=${encodeURIComponent(uid ?? '')}`, '_blank')
+                  })
+                  setContextMenu(null)
+                }}
+              >
+                <Download className="size-4 mr-2" /> Descargar
+              </Button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Mensajes de estado */}
       {error && <p role="alert" className="rounded-2xl bg-destructive/10 border border-destructive/20 px-6 py-4 text-base text-destructive">{error}</p>}

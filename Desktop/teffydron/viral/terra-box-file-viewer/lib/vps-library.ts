@@ -509,6 +509,75 @@ export async function moveVpsLibraryFile(path: string, destinationFolder: string
   await rename(source, target)
 }
 
+export async function deleteVpsLibraryFile(relativePath: string, userId?: string) {
+  const firstPart = relativePath.split('/')[0]
+  if (HIDDEN_FOLDERS.includes(firstPart)) throw new Error('No se pueden eliminar archivos de esta carpeta.')
+  const safePath = validatePath(relativePath, false)
+  const fullPath = resolveInsideLibrary(safePath, userId)
+  const fileStat = await lstat(fullPath)
+  if (!fileStat.isFile()) throw new Error('El archivo solicitado no existe.')
+  const dir = dirname(fullPath)
+  const ext = extname(basename(fullPath)).toLowerCase()
+  if (COVER_TYPES.includes(ext)) {
+    for (const oldExtension of COVER_TYPES) {
+      if (oldExtension === ext) continue
+      await rm(join(dir, `${COVER_PREFIX}${oldExtension.slice(1)}`), { force: true })
+    }
+  }
+  await rm(fullPath, { force: true })
+}
+
+export async function copyVpsLibraryFile(sourcePath: string, destinationFolder: string, userId?: string) {
+  await ensureVpsLibraryDirectory(userId)
+  const destination = validatePath(destinationFolder)
+  const targetFolder = resolveInsideLibrary(destination, userId)
+  const targetStat = await lstat(targetFolder)
+  if (!targetStat.isDirectory()) throw new Error('La carpeta de destino no existe.')
+
+  const fileName = sourcePath.split('/').pop()!
+  const target = join(targetFolder, fileName)
+
+  if (sourcePath.startsWith('cache/')) {
+    const cachePath = getVideoCachePath(sourcePath.slice(6))
+    let cacheStat
+    try {
+      cacheStat = await lstat(cachePath)
+    } catch (error) {
+      if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+        throw new Error('El archivo de caché ya no está disponible.')
+      }
+      throw error
+    }
+    if (!cacheStat.isFile()) throw new Error('El archivo de caché no es un archivo válido.')
+    try {
+      await lstat(target)
+      throw new Error('Ya existe un archivo con ese nombre en la carpeta de destino.')
+    } catch (error) {
+      if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) throw error
+    }
+    const stream = createReadStream(cachePath)
+    const out = createWriteStream(target, { flags: 'wx', mode: 0o640 })
+    await pipeline(stream, out)
+    return
+  }
+
+  const current = validatePath(sourcePath, false)
+  const source = resolveInsideLibrary(current, userId)
+  const sourceStat = await lstat(source)
+  if (!sourceStat.isFile() || !mediaType(current.split('/').pop()!)) {
+    throw new Error('Solo se pueden copiar archivos multimedia.')
+  }
+  try {
+    await lstat(target)
+    throw new Error('Ya existe un archivo con ese nombre en la carpeta de destino.')
+  } catch (error) {
+    if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) throw error
+  }
+  const stream = createReadStream(source)
+  const out = createWriteStream(target, { flags: 'wx', mode: 0o640 })
+  await pipeline(stream, out)
+}
+
 function validateFolderName(value: string) {
   const name = value.trim()
   if (!name || name.length > 120 || name === '.' || name === '..' ||
