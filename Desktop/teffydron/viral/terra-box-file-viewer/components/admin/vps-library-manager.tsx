@@ -144,7 +144,7 @@ export function VpsLibraryManager() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'move-file', ...query }),
-          })}
+          }))
         }
       }
       setClipboard([])
@@ -495,7 +495,7 @@ export function VpsLibraryManager() {
           <span className="text-sm">{clipboard.length} archivo(s) en el portapapeles</span>
           <Button
             size="sm"
-            variant="accent"
+            variant="ghost"
             onClick={() => pasteClipboard()}
             disabled={busy}
           >

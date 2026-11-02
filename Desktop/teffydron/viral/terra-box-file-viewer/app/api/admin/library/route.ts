@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getViewer } from '@/lib/viewer'
 import {
+  copyVpsLibraryFile,
   createVpsLibraryFolder,
   deleteVpsLibraryFile,
   getVpsLibrarySnapshot,
