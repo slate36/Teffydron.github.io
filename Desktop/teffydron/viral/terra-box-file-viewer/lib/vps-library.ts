@@ -462,19 +462,44 @@ export async function renameVpsLibraryFolder(path: string, name: string, userId?
 }
 
 export async function moveVpsLibraryFile(path: string, destinationFolder: string, userId?: string) {
-  if (path.startsWith('cache/')) throw new Error('No se pueden mover archivos de la caché de TeraBox.')
   await ensureVpsLibraryDirectory(userId)
-  const current = validatePath(path, false)
   const destination = validatePath(destinationFolder)
+  const targetFolder = resolveInsideLibrary(destination, userId)
+  const targetStat = await lstat(targetFolder)
+  if (!targetStat.isDirectory()) throw new Error('La carpeta de destino no existe.')
+
+  const fileName = path.split('/').pop()!
+  const target = join(targetFolder, fileName)
+
+  if (path.startsWith('cache/')) {
+    // Archivo de caché de TeraBox: mover físicamente al directorio de biblioteca del usuario
+    const cachePath = getVideoCachePath(path.slice(6))
+    let cacheStat
+    try {
+      cacheStat = await lstat(cachePath)
+    } catch (error) {
+      if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+        throw new Error('El archivo de caché ya no está disponible.')
+      }
+      throw error
+    }
+    if (!cacheStat.isFile()) throw new Error('El archivo de caché no es un archivo válido.')
+    try {
+      await lstat(target)
+      throw new Error('Ya existe un archivo con ese nombre en la carpeta de destino.')
+    } catch (error) {
+      if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) throw error
+    }
+    await rename(cachePath, target)
+    return
+  }
+
+  const current = validatePath(path, false)
   const source = resolveInsideLibrary(current, userId)
   const sourceStat = await lstat(source)
   if (!sourceStat.isFile() || !mediaType(current.split('/').pop()!)) {
     throw new Error('Solo se pueden mover archivos multimedia.')
   }
-  const targetFolder = resolveInsideLibrary(destination, userId)
-  const targetStat = await lstat(targetFolder)
-  if (!targetStat.isDirectory()) throw new Error('La carpeta de destino no existe.')
-  const target = join(targetFolder, current.split('/').pop()!)
   try {
     await lstat(target)
     throw new Error('Ya existe un archivo con ese nombre en la carpeta de destino.')
@@ -494,7 +519,7 @@ function validateFolderName(value: string) {
 }
 
 export async function renameVpsLibraryFile(path: string, name: string, userId?: string) {
-  if (path.startsWith('cache/')) throw new Error('No se pueden renombrar archivos de la caché de TeraBox.')
+  if (path.startsWith('cache/')) throw new Error('Primero mové el archivo a una carpeta de la biblioteca para poder renombrarlo.')
   const current = validatePath(path, false)
   const safeName = validateFileName(name)
   const parent = current.split('/').slice(0, -1).join('/')
