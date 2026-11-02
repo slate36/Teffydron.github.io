@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Folder, FolderOpen, ImagePlus, LoaderCircle, Pencil, Upload, Trash2 } from 'lucide-react'
+import { Folder, FolderOpen, ImagePlus, LoaderCircle, Pencil, Upload, Trash2, Search, Film, Music, Image as ImageIcon, File } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -14,6 +14,14 @@ type Snapshot = { folders: FolderItem[]; files: FileItem[]; usedBytes: number; l
 function formatBytes(bytes: number) {
   if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(0)} MB`
   return `${(bytes / 1024 ** 3).toFixed(1)} GB`
+}
+
+function getFileIcon(name: string) {
+  const ext = name.split('.').pop()?.toLowerCase()
+  if (['mp4', 'mov', 'webm', 'mkv', 'm4v'].includes(ext)) return <Film className="size-5 text-primary" />
+  if (['mp3', 'm4a', 'aac', 'wav', 'ogg'].includes(ext)) return <Music className="size-5 text-primary" />
+  if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) return <ImageIcon className="size-5 text-primary" />
+  return <File className="size-5 text-muted-foreground" />
 }
 
 async function readResponse(response: Response) {
@@ -30,6 +38,7 @@ export function VpsLibraryManager() {
   const [uploading, setUploading] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const fileInput = useRef<HTMLInputElement>(null)
 
   async function refresh() {
@@ -137,40 +146,80 @@ export function VpsLibraryManager() {
 
   const folders = snapshot?.folders ?? []
   const files = snapshot?.files ?? []
+  
+  // Filtrar archivos por búsqueda
+  const filteredFiles = files.filter(file => 
+    file.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    file.folder.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+  
+  // Filtrar carpetas por búsqueda
+  const filteredFolders = folders.filter(folder =>
+    folder.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border bg-background p-3">
-          <p className="text-xs text-muted-foreground">Espacio usado compartido</p>
-          <p className="mt-1 font-semibold">
-            {formatBytes(snapshot?.usedBytes ?? 0)} / {formatBytes(snapshot?.limitBytes ?? 70 * 1024 ** 3)}
-          </p>
+    <div className="flex flex-col gap-6">
+      {/* Espacio usado - Grande y claro */}
+      <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-primary">Espacio de almacenamiento</h2>
+          <div className="text-right">
+            <p className="text-3xl font-bold text-primary">{formatBytes(snapshot?.usedBytes ?? 0)}</p>
+            <p className="text-sm text-muted-foreground">de {formatBytes(snapshot?.limitBytes ?? 70 * 1024 ** 3)}</p>
+          </div>
         </div>
-        <div className="rounded-lg border bg-background p-3">
-          <p className="text-xs text-muted-foreground">Carpetas locales</p>
-          <p className="mt-1 font-semibold">{Math.max(0, folders.length - 1)}</p>
-        </div>
-        <div className="rounded-lg border bg-background p-3">
-          <p className="text-xs text-muted-foreground">Archivos locales</p>
-          <p className="mt-1 font-semibold">{files.length}</p>
+        <div className="w-full h-4 bg-muted rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500"
+            style={{ width: `${((snapshot?.usedBytes ?? 0) / (snapshot?.limitBytes ?? 70 * 1024 ** 3)) * 100}%` }}
+          />
         </div>
       </div>
 
+      {/* Barra de búsqueda */}
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Buscar videos, imágenes o archivos..."
+          className="h-12 pl-12 text-lg"
+        />
+      </div>
+
+      {/* Subir archivos - Grande y visible */}
       <div
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {
           event.preventDefault()
           if (event.dataTransfer.files.length) void uploadFiles(event.dataTransfer.files)
         }}
-        className="flex flex-col gap-3 rounded-xl border border-dashed border-primary/40 bg-primary/5 p-4 sm:flex-row sm:items-end"
+        className="flex flex-col gap-4 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-8 text-center hover:bg-primary/10 transition-colors"
       >
-        <label className="flex min-w-48 flex-1 flex-col gap-1.5 text-xs font-medium">
-          Carpeta para guardar
+        <Upload className="size-12 mx-auto text-primary mb-2" />
+        <h3 className="text-xl font-semibold">Subir archivos</h3>
+        <p className="text-muted-foreground">Arrastrá archivos aquí o hacé clic para seleccionar</p>
+        <div className="flex items-center justify-center gap-4">
+          <label className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-white font-semibold hover:bg-primary/90 transition-colors cursor-pointer">
+            <Upload className="size-5" />
+            {uploading || 'Seleccionar archivos'}
+          </label>
+          <input
+            ref={fileInput}
+            type="file"
+            multiple
+            accept="video/*,image/*,audio/*"
+            className="sr-only"
+            onChange={(event) => {
+              if (event.currentTarget.files) void uploadFiles(event.currentTarget.files)
+              event.currentTarget.value = ''
+            }}
+          />
           <select
             value={selectedFolder}
             onChange={(event) => setSelectedFolder(event.target.value)}
-            className="h-9 rounded-md border bg-background px-3 text-sm"
+            className="h-12 px-4 rounded-xl border bg-background text-base min-w-64"
           >
             {folders.map((folder) => (
               <option key={folder.path || 'root'} value={folder.path}>
@@ -178,83 +227,136 @@ export function VpsLibraryManager() {
               </option>
             ))}
           </select>
-        </label>
-        <input
-          ref={fileInput}
-          type="file"
-          multiple
-          accept="video/*,image/*,audio/*"
-          className="sr-only"
-          onChange={(event) => {
-            if (event.currentTarget.files) void uploadFiles(event.currentTarget.files)
-            event.currentTarget.value = ''
-          }}
-        />
-        <Button type="button" onClick={() => fileInput.current?.click()} disabled={busy || Boolean(uploading)} className="gap-2">
-          {uploading ? <LoaderCircle className="size-4 animate-spin" /> : <Upload className="size-4" />}
-          {uploading || 'Subir varios archivos'}
-        </Button>
-        <p className="text-xs text-muted-foreground sm:self-center">También podés soltarlos aquí.</p>
+        </div>
+        {uploading && (
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <LoaderCircle className="size-4 animate-spin" />
+            {uploading}
+          </div>
+        )}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {folders.map((folder) => (
-          <div
-            key={folder.path || 'root'}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => handleDrop(event, folder.path)}
-            className={cn(
-              'rounded-xl border bg-background p-4 transition-colors',
-              folder.path === selectedFolder ? 'border-primary ring-1 ring-primary/20' : 'hover:border-primary/40',
-            )}
-          >
-            <div className="flex items-start gap-3">
-              <FolderOpen className="mt-0.5 size-5 shrink-0 text-primary" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold">{folder.name}</p>
-                <p className="truncate text-xs text-muted-foreground">{folder.path || 'Raíz'}</p>
-              </div>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button type="button" size="sm" variant="outline" onClick={() => setSelectedFolder(folder.path)}>
-                Subir aquí
-              </Button>
-              {folder.path && (
-                <>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="gap-1"
-                    disabled={busy}
-                    onClick={() => {
-                      const name = window.prompt('Nuevo nombre de la carpeta:', folder.name)
-                      if (name?.trim()) void mutate({ action: 'rename-folder', path: folder.path, name })
+      {/* Carpetas - Vista de cuadrícula grande */}
+      {filteredFolders.length > 0 && (
+        <div>
+          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <FolderOpen className="size-6 text-primary" />
+            Carpetas ({filteredFolders.length})
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredFolders.map((folder) => (
+              <div
+                key={folder.path || 'root'}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => handleDrop(event, folder.path)}
+                className={cn(
+                  'rounded-2xl border-2 bg-card p-6 transition-all hover:shadow-lg hover:border-primary/40 cursor-pointer',
+                  folder.path === selectedFolder ? 'border-primary bg-primary/5' : 'hover:bg-muted/50',
+                )}
+                onClick={() => setSelectedFolder(folder.path)}
+              >
+                <div className="flex flex-col items-center gap-3">
+                  <div className="rounded-2xl bg-primary/10 p-4">
+                    <FolderOpen className="size-12 text-primary" />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-semibold text-base">{folder.name}</p>
+                    <p className="text-sm text-muted-foreground">{folder.path || 'Raíz'}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedFolder(folder.path)
                     }}
                   >
-                    <Pencil className="size-3.5" /> Renombrar
+                    Subir aquí
                   </Button>
-                  <label className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-lg border px-2.5 text-xs font-medium hover:bg-muted">
-                    <ImagePlus className="size-3.5" /> Portada
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      className="sr-only"
-                      onChange={(event) => {
-                        void uploadCover(folder.path, event.currentTarget.files?.[0])
-                        event.currentTarget.value = ''
+                  {folder.path && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      disabled={busy}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const name = window.prompt('Nuevo nombre de la carpeta:', folder.name)
+                        if (name?.trim()) void mutate({ action: 'rename-folder', path: folder.path, name })
                       }}
-                    />
-                  </label>
-                </>
-              )}
-            </div>
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
+      )}
+
+      {/* Archivos - Vista de galería grande con miniaturas */}
+      <div>
+        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <Folder className="size-6 text-primary" />
+          Archivos ({filteredFiles.length})
+        </h3>
+        {filteredFiles.length ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredFiles.map((file) => (
+              <div
+                key={file.path}
+                draggable
+                onDragStart={(event) => event.dataTransfer.setData('text/vps-library-file', file.path)}
+                className="group relative rounded-2xl border-2 bg-card overflow-hidden transition-all hover:shadow-lg hover:border-primary/40 cursor-grab"
+                title="Arrastrá este archivo a una carpeta para moverlo"
+              >
+                {/* Miniatura/Icono grande */}
+                <div className="aspect-video bg-muted/30 flex items-center justify-center p-4">
+                  {getFileIcon(file.name)}
+                </div>
+                
+                {/* Información del archivo */}
+                <div className="p-4">
+                  <p className="font-semibold text-base truncate mb-1">{file.name}</p>
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span className="truncate max-w-32">{file.folder || 'Raíz'}</span>
+                    <span className="font-medium">{formatBytes(file.size)}</span>
+                  </div>
+                </div>
+
+                {/* Botones de acción */}
+                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-8 w-8 p-0"
+                    disabled={busy}
+                    onClick={() => renameFile(file.path, file.name)}
+                    title="Renombrar archivo"
+                  >
+                    <Pencil className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border-2 border-dashed p-12 text-center">
+            <Folder className="size-16 mx-auto text-muted-foreground mb-4" />
+            <p className="text-lg text-muted-foreground">
+              {snapshot ? 'No hay archivos aún. Subí videos, imágenes o audios para comenzar.' : 'Cargando biblioteca…'}
+            </p>
+          </div>
+        )}
       </div>
 
+      {/* Crear carpeta - Grande y claro */}
       <form
-        className="flex flex-col gap-2 rounded-xl border bg-background p-4 sm:flex-row"
+        className="flex flex-col gap-4 rounded-2xl border-2 bg-card p-6"
         onSubmit={(event) => {
           event.preventDefault()
           if (!newFolderName.trim()) return
@@ -262,66 +364,24 @@ export function VpsLibraryManager() {
           setNewFolderName('')
         }}
       >
-        <Input
-          value={newFolderName}
-          onChange={(event) => setNewFolderName(event.target.value)}
-          placeholder={`Nueva carpeta dentro de ${folders.find((folder) => folder.path === selectedFolder)?.name ?? 'raíz'}`}
-          aria-label="Nombre de la nueva carpeta"
-          maxLength={120}
-        />
-        <Button type="submit" disabled={busy || !newFolderName.trim()} className="shrink-0">
-          Crear carpeta
-        </Button>
+        <h3 className="text-lg font-semibold">Crear nueva carpeta</h3>
+        <div className="flex gap-3">
+          <Input
+            value={newFolderName}
+            onChange={(event) => setNewFolderName(event.target.value)}
+            placeholder={`Nombre de la carpeta (dentro de ${folders.find((folder) => folder.path === selectedFolder)?.name ?? 'raíz'})`}
+            className="flex-1 h-12 text-base"
+            maxLength={120}
+          />
+          <Button type="submit" disabled={busy || !newFolderName.trim()} className="h-12 px-8 text-base">
+            Crear carpeta
+          </Button>
+        </div>
       </form>
 
-      <div
-        onDragOver={(event) => event.preventDefault()}
-        onDrop={(event) => handleDrop(event, '')}
-        className="rounded-xl border border-dashed p-4"
-      >
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-          <Folder className="size-4 text-primary" /> Archivos en el VPS
-        </h3>
-        {files.length ? (
-          <ul className="divide-y max-h-96 overflow-y-auto">
-            {files.map((file) => (
-              <li
-                key={file.path}
-                draggable
-                onDragStart={(event) => event.dataTransfer.setData('text/vps-library-file', file.path)}
-                className="flex cursor-grab items-center gap-3 py-3 active:cursor-grabbing hover:bg-secondary/30 transition-colors"
-                title="Arrastrá este archivo a una carpeta para moverlo"
-              >
-                <Folder className="size-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate text-sm font-medium">{file.name}</span>
-                <span className="hidden sm:block max-w-48 truncate text-xs text-muted-foreground">
-                  {file.folder || 'Raíz'}
-                </span>
-                <span className="text-xs tabular-nums text-muted-foreground hidden sm:block">{formatBytes(file.size)}</span>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="gap-1 h-7 px-2"
-                  disabled={busy}
-                  onClick={() => renameFile(file.path, file.name)}
-                  title="Renombrar archivo"
-                >
-                  <Pencil className="size-3" />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            {snapshot ? 'Todavía no hay archivos. Podés subir varios a la vez.' : 'Cargando biblioteca…'}
-          </p>
-        )}
-      </div>
-
-      {error && <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
-      {notice && <p role="status" className="rounded-lg bg-primary/10 px-3 py-2 text-sm">{notice}</p>}
-      {uploading && <p role="status" className="text-sm text-muted-foreground">{uploading}</p>}
+      {/* Mensajes de estado */}
+      {error && <p role="alert" className="rounded-2xl bg-destructive/10 border border-destructive/20 px-6 py-4 text-base text-destructive">{error}</p>}
+      {notice && <p role="status" className="rounded-2xl bg-primary/10 border border-primary/20 px-6 py-4 text-base">{notice}</p>}
       {busy && <span className="sr-only" aria-live="polite">Guardando cambios…</span>}
     </div>
   )
