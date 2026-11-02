@@ -107,7 +107,10 @@ function ShareMenu({
   className?: string
 }) {
   const [open, setOpen] = useState(false)
-  const link = file.directHref || file.shareHref || fileHref(file)
+  const relativeLink = file.directHref || file.shareHref || fileHref(file)
+  const link = typeof window !== 'undefined'
+    ? `${window.location.origin}${relativeLink.startsWith('/') ? relativeLink : '/' + relativeLink}`
+    : relativeLink
 
   const shareWhatsApp = () => {
     const text = encodeURIComponent(`Mira este video: ${file.name}`)
