@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto'
 import { Readable, Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import type { TeraboxFile } from '@/lib/terabox'
-import { VIDEO_CACHE_LIMIT_BYTES, getVideoCacheDirectory } from '@/lib/video-cache'
+import { VIDEO_CACHE_LIMIT_BYTES, getVideoCacheDirectory, getVideoCachePath } from '@/lib/video-cache'
 import { db } from '@/lib/db'
 import { videoCache } from '@/lib/db/schema'
 
@@ -499,7 +499,7 @@ export async function renameVpsLibraryFile(path: string, name: string, userId?: 
       await lstat(destination)
       throw new Error('Ya existe un archivo con ese nombre.')
     } catch (error) {
-      if (!(error instanceof Error && 'code' in error && 'code === 'ENOENT')) throw error
+      if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) throw error
     }
   }
   await rename(resolveInsideLibrary(current, userId), destination)

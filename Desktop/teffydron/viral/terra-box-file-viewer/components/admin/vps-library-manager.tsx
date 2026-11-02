@@ -17,7 +17,7 @@ function formatBytes(bytes: number) {
 }
 
 function getFileIcon(name: string) {
-  const ext = name.split('.').pop()?.toLowerCase()
+  const ext = name.split('.').pop()?.toLowerCase() ?? ''
   if (['mp4', 'mov', 'webm', 'mkv', 'm4v'].includes(ext)) return <Film className="size-5 text-primary" />
   if (['mp3', 'm4a', 'aac', 'wav', 'ogg'].includes(ext)) return <Music className="size-5 text-primary" />
   if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) return <ImageIcon className="size-5 text-primary" />
