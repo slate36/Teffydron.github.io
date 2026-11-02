@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 import {
   ArrowRight,
   FileArchive,
@@ -143,7 +144,7 @@ function ShareMenu({
         size="sm"
         variant="outline"
         className={cn('h-8 w-8 p-0', className)}
-        onClick={(e) => {
+        onClick={(e: React.MouseEvent) => {
           e.stopPropagation()
           setOpen(!open)
         }}
