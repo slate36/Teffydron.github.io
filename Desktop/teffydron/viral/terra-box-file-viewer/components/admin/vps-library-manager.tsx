@@ -274,8 +274,8 @@ export function VpsLibraryManager() {
         >
           <ArrowLeft className="size-4 mr-2" /> Volver
         </Button>
-        <span className="text-sm text-muted-foreground">
-          {currentPath ? currentPath.split('/').pop() : 'Biblioteca raíz'}
+        <span className="text-sm font-medium text-muted-foreground">
+          {currentPath ? `En: ${currentPath.split('/').pop()}` : 'Biblioteca raíz'}
         </span>
       </div>
 
@@ -393,7 +393,7 @@ export function VpsLibraryManager() {
                 <div className="flex gap-2 mt-2">
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="default"
                     className="flex-1"
                     onClick={(e) => {
                       e.stopPropagation()
@@ -401,7 +401,7 @@ export function VpsLibraryManager() {
                       setContextMenu(null)
                     }}
                   >
-                    Abrir
+                    Abrir carpeta
                   </Button>
                   {folder.path && (
                     <Button
