@@ -235,7 +235,14 @@ export function VpsLibraryManager() {
   const files = snapshot?.files ?? []
 
   const currentFolders = folders.filter((folder) => parentPath(folder.path) === currentPath)
-  const currentFiles = files.filter((file) => file.folder === currentPath)
+  const currentFiles = currentPath === ''
+    ? files.filter((file) => file.folder === currentPath && file.folder !== 'Caché de TeraBox')
+    : files.filter((file) => file.folder === currentPath)
+
+  // Archivos de caché de TeraBox (solo visibles en la raíz)
+  const cachedFiles = currentPath === ''
+    ? files.filter((file) => file.folder === 'Caché de TeraBox')
+    : []
 
   const filteredFiles = currentFiles.filter((file) =>
     file.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -243,6 +250,9 @@ export function VpsLibraryManager() {
   )
   const filteredFolders = currentFolders.filter((folder) =>
     folder.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+  const filteredCached = cachedFiles.filter((file) =>
+    file.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const canPaste = clipboard.length > 0
@@ -488,7 +498,64 @@ export function VpsLibraryManager() {
         )}
       </div>
 
-      {/* Portapapeles */}
+      {/* Caché de TeraBox - Videos descargados en el VPS */}
+      {currentPath === '' && filteredCached.length > 0 && (
+        <div>
+          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Zap className="size-6 text-amber-600" />
+            Caché de TeraBox ({filteredCached.length})
+          </h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Videos descargados en el almacenamiento local del VPS. Arrastra a una carpeta o usa el menú para moverlos a tu biblioteca permanente.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredCached.map((file) => (
+              <div
+                key={file.path}
+                draggable
+                onDragStart={(event) => event.dataTransfer.setData('text/vps-library-file', file.path)}
+                onDoubleClick={() => {
+                  const userId = getCurrentUserId()
+                  void userId.then((uid) => {
+                    window.open(`/api/library/file?path=${encodeURIComponent(file.path)}&userId=${encodeURIComponent(uid ?? '')}`, '_blank')
+                  })
+                  setContextMenu(null)
+                }}
+                onContextMenu={(event) => handleContextMenu(event, file)}
+                onDrop={(event) => handleDrop(event, '')}
+                onDragOver={(event) => event.preventDefault()}
+                className="group relative rounded-2xl border-2 bg-amber-50/30 overflow-hidden transition-all hover:shadow-lg hover:border-amber-500/50 cursor-grab"
+                title="Video en caché de TeraBox · Arrastra a una carpeta para moverlo a tu biblioteca"
+              >
+                <div className="aspect-video bg-amber-100/30 flex items-center justify-center p-4">
+                  {getFileIcon(file.name)}
+                </div>
+
+                <div className="p-4">
+                  <p className="font-semibold text-base truncate mb-1">{file.name}</p>
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span className="truncate max-w-32">Caché de TeraBox</span>
+                    <span className="font-medium text-amber-700">{formatBytes(file.size)}</span>
+                  </div>
+                </div>
+
+                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-8 w-8 p-0"
+                    disabled={busy}
+                    onClick={() => renameFile(file.path, file.name)}
+                    title="Renombrar archivo"
+                  >
+                    <Pencil className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       {canPaste && (
         <div className="rounded-2xl border-2 border-accent bg-accent/5 p-4 flex items-center gap-3">
           <Clipboard className="size-5 text-accent" />
