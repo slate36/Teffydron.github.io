@@ -58,6 +58,7 @@ export function VpsLibraryManager() {
   const [newFolderName, setNewFolderName] = useState('')
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState('')
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({})
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -163,24 +164,55 @@ export function VpsLibraryManager() {
     if (!list.length) return
     setError('')
     setNotice('')
+    setUploadProgress({})
+    setBusy(true)
+
     for (let index = 0; index < list.length; index++) {
       const file = list[index]
       setUploading(`Subiendo ${index + 1} de ${list.length}: ${file.name}`)
+
       try {
         const query = new URLSearchParams({ folder: currentPath, name: file.name, userId: userId ?? '' })
-        await readResponse(await fetch(`/api/admin/library/upload?${query}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/octet-stream' },
-          body: file,
-        }))
+        const url = `/api/admin/library/upload?${query}`
+
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('POST', url, true)
+          xhr.setRequestHeader('Content-Type', 'application/octet-stream')
+
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const percent = Math.round((event.loaded / event.total) * 100)
+              setUploadProgress((prev) => ({ ...prev, [file.name]: percent }))
+            }
+          }
+
+          xhr.onload = () => {
+            setUploadProgress((prev) => ({ ...prev, [file.name]: 100 }))
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve()
+            } else {
+              const body = xhr.responseText
+              reject(new Error(body || `Error ${xhr.status} subiendo ${file.name}`))
+            }
+          }
+
+          xhr.onerror = () => reject(new Error(`Error de red subiendo ${file.name}`))
+          xhr.ontimeout = () => reject(new Error(`Tiempo agotado subiendo ${file.name}`))
+
+          xhr.send(file)
+        })
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : `No se pudo subir ${file.name}.`)
         setUploading('')
+        setBusy(false)
         await refresh().catch(() => undefined)
         return
       }
     }
+
     setUploading('')
+    setBusy(false)
     setNotice(`${list.length} archivo(s) subido(s).`)
     try {
       await refresh()
@@ -367,8 +399,26 @@ export function VpsLibraryManager() {
             ))}
           </select>
         </div>
-        {uploading && (
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+        {Object.keys(uploadProgress).length > 0 && (
+          <div className="w-full space-y-3 mt-4">
+            {Object.entries(uploadProgress).map(([name, progress]) => (
+              <div key={name} className="flex flex-col gap-1">
+                <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
+                  <span className="truncate max-w-[60%]">{name}</span>
+                  <span>{progress}%</span>
+                </div>
+                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-100"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {uploading && !Object.keys(uploadProgress).length && (
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-4">
             <LoaderCircle className="size-4 animate-spin" />
             {uploading}
           </div>

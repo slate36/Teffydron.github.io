@@ -77,7 +77,7 @@ export function InteractiveDrone({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       className={cn(
-        'group/stage relative flex flex-col justify-between overflow-hidden rounded-[24px] border border-[#c5a059]/25 bg-gradient-to-b from-[#164532] via-[#164532] to-[#164532] p-6 text-white shadow-[0_20px_50px_rgba(0,0,0,0.6)] select-none',
+        'group/stage relative flex flex-col justify-between overflow-hidden rounded-[24px] border border-[#c5a059]/25 bg-gradient-to-b from-[#164532] via-[#164532] to-[#164532] p-4 sm:p-6 text-white shadow-[0_20px_50px_rgba(0,0,0,0.6)] select-none',
         className,
       )}
       style={{ perspective: 1000 }}
@@ -87,7 +87,7 @@ export function InteractiveDrone({
       <div className="pointer-events-none absolute -left-16 -bottom-16 h-56 w-56 rounded-full bg-[#164532]/25 blur-3xl" />
 
       {/* Top Bar: Discreet Polo & Drone Status */}
-      <div className="relative z-10 flex items-center justify-between border-b border-white/10 pb-3 text-xs">
+      <div className="relative z-10 flex items-center justify-between border-b border-white/10 pb-2 sm:pb-3 text-xs">
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-[#c5a059] animate-pulse" />
           <span className="font-serif tracking-widest text-[#e8d5aa] text-[11px] uppercase">
@@ -104,7 +104,7 @@ export function InteractiveDrone({
       </div>
 
       {/* Main Interactive Stage: Drone & Polo Tactical Pitch */}
-      <div className="relative my-4 flex flex-col gap-4">
+      <div className="relative my-2 sm:my-4 flex flex-col gap-2 sm:gap-4">
         {/* Floating Discreet Drone */}
         <Link
           href="/videoteca"
@@ -114,7 +114,7 @@ export function InteractiveDrone({
             transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
           }}
         >
-          <div className="relative h-40 w-60 drop-shadow-[0_15px_30px_rgba(0,0,0,0.8)] sm:h-44 sm:w-64">
+          <div className="relative h-32 sm:h-40 w-48 sm:w-60 drop-shadow-[0_15px_30px_rgba(0,0,0,0.8)] sm:h-44 sm:w-64">
             <svg viewBox="0 0 320 220" className="h-full w-full" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="droneMatte" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -248,7 +248,7 @@ export function InteractiveDrone({
           </div>
 
           {/* Minimalist Polo Pitch SVG */}
-          <div className="relative h-28 w-full overflow-hidden rounded-lg border border-[#c5a059]/20 bg-[#164532]">
+          <div className="relative h-20 sm:h-28 w-full overflow-hidden rounded-lg border border-[#c5a059]/20 bg-[#164532]">
             {/* Field Stripes */}
             <div className="absolute inset-0 grid grid-cols-6 opacity-15">
               <div className="bg-black/30" />
