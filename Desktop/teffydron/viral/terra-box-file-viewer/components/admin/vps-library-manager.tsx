@@ -272,7 +272,7 @@ export function VpsLibraryManager() {
   return (
     <div className="flex flex-col gap-6" onContextMenu={closeContextMenu}>
       {/* Navegación */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
         <Button
           size="sm"
           variant="outline"
@@ -284,21 +284,23 @@ export function VpsLibraryManager() {
         >
           <ArrowLeft className="size-4 mr-2" /> Volver
         </Button>
-        <span className="text-sm font-medium text-muted-foreground">
+        <span className="text-sm sm:text-base font-medium text-muted-foreground truncate max-w-[60%] sm:max-w-none">
           {currentPath ? `En: ${currentPath.split('/').pop()}` : 'Biblioteca raíz'}
         </span>
       </div>
 
       {/* Espacio usado */}
-      <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-primary">Espacio de almacenamiento</h2>
-          <div className="text-right">
-            <p className="text-3xl font-bold text-primary">{formatBytes(snapshot?.usedBytes ?? 0)}</p>
-            <p className="text-sm text-muted-foreground">de {formatBytes(snapshot?.limitBytes ?? 70 * 1024 ** 3)}</p>
+      <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2 sm:gap-0">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-primary">Espacio de almacenamiento</h2>
+          </div>
+          <div className="text-right sm:text-right">
+            <p className="text-2xl sm:text-3xl font-bold text-primary">{formatBytes(snapshot?.usedBytes ?? 0)}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">de {formatBytes(snapshot?.limitBytes ?? 70 * 1024 ** 3)}</p>
           </div>
         </div>
-        <div className="w-full h-4 bg-muted rounded-full overflow-hidden">
+        <div className="w-full h-3 sm:h-4 bg-muted rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500"
             style={{ width: `${((snapshot?.usedBytes ?? 0) / (snapshot?.limitBytes ?? 70 * 1024 ** 3)) * 100}%` }}
@@ -307,39 +309,47 @@ export function VpsLibraryManager() {
       </div>
 
       {/* Barra de búsqueda */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
+      <div className="relative w-full">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 sm:size-5 text-muted-foreground" />
         <Input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Buscar videos, imágenes o archivos..."
-          className="h-12 pl-12 text-lg"
+          className="h-10 sm:h-12 pl-10 sm:pl-12 text-base"
         />
       </div>
 
       {/* Subir archivos */}
       <div
         onDragOver={(event) => event.preventDefault()}
+        onDragLeave={(event) => event.preventDefault()}
         onDrop={(event) => {
           event.preventDefault()
           if (event.dataTransfer.files.length) void uploadFiles(event.dataTransfer.files)
         }}
-        className="flex flex-col gap-4 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-8 text-center hover:bg-primary/10 transition-colors"
+        className="flex flex-col gap-4 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-8 sm:p-10 text-center hover:bg-primary/10 transition-colors"
       >
-        <Upload className="size-12 mx-auto text-primary mb-2" />
-        <h3 className="text-xl font-semibold">Subir archivos</h3>
-        <p className="text-muted-foreground">Arrastrá archivos aquí o hacé clic para seleccionar</p>
-        <div className="flex items-center justify-center gap-4">
-          <label className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-white font-semibold hover:bg-primary/90 transition-colors cursor-pointer">
+        <Upload className="size-10 sm:size-12 mx-auto text-primary mb-2 sm:mb-3" />
+        <h3 className="text-xl sm:text-2xl font-semibold">Subir archivos</h3>
+        <p className="text-sm sm:text-base text-muted-foreground">Arrastrá archivos aquí o hacé clic para seleccionar</p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto">
+          <Button
+            size="lg"
+            variant="default"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 sm:px-8"
+            onClick={() => {
+              fileInput.current?.click()
+            }}
+          >
             <Upload className="size-5" />
             {uploading || 'Seleccionar archivos'}
-          </label>
+          </Button>
           <input
             ref={fileInput}
             type="file"
             multiple
             accept="video/*,image/*,audio/*"
-            className="sr-only"
+            className="hidden"
             onChange={(event) => {
               if (event.currentTarget.files) void uploadFiles(event.currentTarget.files)
               event.currentTarget.value = ''
@@ -348,7 +358,7 @@ export function VpsLibraryManager() {
           <select
             value={currentPath}
             onChange={(event) => setCurrentPath(event.target.value)}
-            className="h-12 px-4 rounded-xl border bg-background text-base min-w-64"
+            className="w-full sm:w-auto h-12 px-4 rounded-xl border bg-background text-base min-w-[120px] sm:min-w-64"
           >
             {folders.map((folder) => (
               <option key={folder.path || 'root'} value={folder.path}>
@@ -372,7 +382,7 @@ export function VpsLibraryManager() {
             <FolderOpen className="size-6 text-primary" />
             Carpetas ({filteredFolders.length})
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredFolders.map((folder) => (
               <div
                 key={folder.path || 'root'}
@@ -575,7 +585,7 @@ export function VpsLibraryManager() {
 
       {/* Crear carpeta */}
       <form
-        className="flex flex-col gap-4 rounded-2xl border-2 bg-card p-6"
+        className="flex flex-col gap-4 rounded-2xl border-2 bg-card p-4 sm:p-6"
         onSubmit={(event) => {
           event.preventDefault()
           if (!newFolderName.trim()) return
@@ -584,15 +594,15 @@ export function VpsLibraryManager() {
         }}
       >
         <h3 className="text-lg font-semibold">Crear nueva carpeta</h3>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <Input
             value={newFolderName}
             onChange={(event) => setNewFolderName(event.target.value)}
             placeholder={`Nombre de la carpeta (dentro de ${currentPath ? currentPath.split('/').pop() : 'raíz'})`}
-            className="flex-1 h-12 text-base"
+            className="flex-1 h-12 sm:h-auto text-base"
             maxLength={120}
           />
-          <Button type="submit" disabled={busy || !newFolderName.trim()} className="h-12 px-8 text-base">
+          <Button type="submit" disabled={busy || !newFolderName.trim()} className="w-full sm:w-auto h-12 px-8 text-base">
             Crear carpeta
           </Button>
         </div>
@@ -601,9 +611,10 @@ export function VpsLibraryManager() {
       {/* Menú contextual */}
       {contextMenu && (
         <div
-          className="fixed z-50 rounded-xl border border-white/20 bg-[#164532]/95 backdrop-blur-md shadow-2xl p-2 text-white min-w-[180px]"
-          style={{ left: contextMenu.x, top: contextMenu.y }}
+          className="fixed z-50 rounded-xl border border-white/20 bg-[#164532]/95 backdrop-blur-md shadow-2xl p-2 text-white min-w-[180px] max-w-[90vw]"
+          style={{ left: Math.min(contextMenu.x, window.innerWidth - 200), top: Math.min(contextMenu.y, window.innerHeight - 300) }}
           onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
         >
           {contextMenu.file && (
             <>
