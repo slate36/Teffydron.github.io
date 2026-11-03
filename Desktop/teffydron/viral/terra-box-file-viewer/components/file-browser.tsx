@@ -21,6 +21,8 @@ import {
   Search,
   Share2,
   Sparkles,
+  Trash2,
+  LoaderCircle,
   Zap,
   type LucideIcon,
 } from 'lucide-react'
@@ -216,6 +218,25 @@ export function FileBrowser({ files }: { files: BrowserFile[] }) {
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [filterMode, setFilterMode] = useState<'all' | 'vps' | 'videos' | 'folders'>('all')
   const [vpsHighlight, setVpsHighlight] = useState(false)
+  const [deletingFile, setDeletingFile] = useState<string | null>(null)
+
+  async function deleteFile(path: string, name: string) {
+    if (!window.confirm(`¿Eliminar "${name}" definitivamente?`)) return
+    setDeletingFile(path)
+    try {
+      const response = await fetch(`/api/admin/library?path=${encodeURIComponent(path)}`, {
+        method: 'DELETE',
+      })
+      if (!response.ok) {
+        const result = await response.json()
+        throw new Error(result.error ?? 'No se pudo eliminar el archivo.')
+      }
+      window.location.reload()
+    } catch (error) {
+      setDeletingFile(null)
+      alert(error instanceof Error ? error.message : 'No se pudo eliminar el archivo.')
+    }
+  }
 
   // Listen for the interactive drone jump event
   useEffect(() => {
@@ -532,6 +553,22 @@ export function FileBrowser({ files }: { files: BrowserFile[] }) {
                           file={file}
                           className="flex-1 py-1.5 text-xs text-[#c5a059] hover:bg-white/10 hover:text-white border border-white/10 rounded flex items-center justify-center gap-1"
                         />
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="h-8 px-2 text-xs"
+                          disabled={deletingFile === file.path}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            void deleteFile(file.path, file.name)
+                          }}
+                        >
+                          {deletingFile === file.path ? (
+                            <LoaderCircle className="size-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="size-4" />
+                          )}
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -587,6 +624,24 @@ export function FileBrowser({ files }: { files: BrowserFile[] }) {
                       title={file.name}
                       kind='video'
                     />
+                  )}
+                  {!file.isDir && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="h-8 px-2 text-xs"
+                      disabled={deletingFile === file.path}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void deleteFile(file.path, file.name)
+                      }}
+                    >
+                      {deletingFile === file.path ? (
+                        <LoaderCircle className="size-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-4" />
+                      )}
+                    </Button>
                   )}
                 </li>
               )
