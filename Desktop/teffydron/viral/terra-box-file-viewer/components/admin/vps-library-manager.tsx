@@ -19,6 +19,7 @@ import {
   Download,
   ArrowLeft,
   MoreHorizontal,
+  Zap,
   Scissors,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -236,7 +237,7 @@ export function VpsLibraryManager() {
 
   const currentFolders = folders.filter((folder) => parentPath(folder.path) === currentPath)
   const currentFiles = currentPath === ''
-    ? files.filter((file) => file.folder === currentPath && file.folder !== 'Caché de TeraBox')
+    ? files.filter((file) => file.folder === '')
     : files.filter((file) => file.folder === currentPath)
 
   // Archivos de caché de TeraBox (solo visibles en la raíz)
