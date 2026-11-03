@@ -5,7 +5,7 @@ import SiteNav from '@/components/site-nav'
 import { InteractiveDrone } from '@/components/interactive-drone'
 import { getViewer } from '@/lib/viewer'
 
-export default async function SiteHeader({
+export async function SiteHeader({
   title = 'Videoteca de Polo',
   subtitle = 'Archivo audiovisual y tomas aéreas exclusivas.',
   showDroneHero = false,
