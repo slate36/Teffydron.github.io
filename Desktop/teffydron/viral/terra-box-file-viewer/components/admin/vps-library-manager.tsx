@@ -380,23 +380,16 @@ export function VpsLibraryManager() {
         <h3 className="text-xl sm:text-2xl font-semibold">Subir archivos</h3>
         <p className="text-sm sm:text-base text-muted-foreground">Arrastrá archivos aquí o hacé clic para seleccionar</p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto">
-          <Button
-            size="lg"
-            variant="default"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 sm:px-8"
-            onClick={() => {
-              fileInput.current?.click()
-            }}
-          >
-            <Upload className="size-5" />
+          <label className="flex items-center justify-center gap-2 w-full sm:w-auto flex-1 px-6 sm:px-8 py-3 sm:py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors cursor-pointer font-semibold text-sm sm:text-base">
+            <Upload className="size-5 sm:size-6" />
             {uploading || 'Seleccionar archivos'}
-          </Button>
+          </label>
           <input
             ref={fileInput}
             type="file"
             multiple
             accept="video/*,image/*,audio/*"
-            className="sr-only"
+            className="hidden"
             onChange={(event) => {
               if (event.currentTarget.files) void uploadFiles(event.currentTarget.files)
               event.currentTarget.value = ''
@@ -415,16 +408,23 @@ export function VpsLibraryManager() {
           </select>
         </div>
         {Object.keys(uploadStatus).length > 0 && (
-          <div className="w-full space-y-3 mt-4">
+          <div className="w-full space-y-3 mt-4 border border-primary/20 rounded-xl bg-primary/5 p-4">
+            <div className="flex items-center gap-2 mb-3 text-xs sm:text-sm text-primary/70 font-medium">
+              <Upload className="size-4" />
+              <span>Progreso de subida</span>
+            </div>
             {Object.entries(uploadStatus).map(([name, status]) => (
               <div key={name} className="flex flex-col gap-1">
-                <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
-                  <span className="truncate max-w-[60%]">{name}</span>
-                  <span className={status.status === 'done' ? 'text-emerald-600' : status.status === 'error' ? 'text-destructive' : 'text-primary'}>
-                    {status.status === 'done' ? 'Listo' : status.status === 'error' ? 'Error' : `${status.progress}%`}
+                <div className="flex justify-between text-xs sm:text-sm">
+                  <span className="truncate max-w-[50%] text-muted-foreground">{name}</span>
+                  <span className={cn(
+                    'font-medium',
+                    status.status === 'done' ? 'text-emerald-600' : status.status === 'error' ? 'text-destructive' : 'text-primary',
+                  )}>
+                    {status.status === 'done' ? '✓ Listo' : status.status === 'error' ? '✗ Error' : `${status.progress}%`}
                   </span>
                 </div>
-                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden border border-white/30">
                   <div
                     className={cn(
                       'h-full transition-all duration-200',
