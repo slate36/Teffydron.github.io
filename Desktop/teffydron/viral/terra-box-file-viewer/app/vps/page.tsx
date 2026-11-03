@@ -31,23 +31,25 @@ export default async function VpsVideoPage({
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader title={file.name.replace(/\.[^.]+$/, '')} subtitle="Video disponible en el almacenamiento local del VPS" />
-      <main className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6">
-        <div className="flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-300">
+      <main className="mx-auto flex max-w-5xl flex-col gap-3 px-3 py-4 sm:px-4 sm:py-6">
+        <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-amber-800 dark:text-amber-300">
           <span aria-hidden="true">⚡</span>
           <span>Este video se reproduce desde el VPS.</span>
         </div>
-        <div className="overflow-hidden rounded-2xl border-2 border-accent bg-black shadow-lg">
-          <video src={streamUrl} controls playsInline preload="metadata" className="aspect-video w-full">
+        <div className="overflow-hidden rounded-2xl border-2 border-accent bg-black shadow-lg aspect-video w-full">
+          <video src={streamUrl} controls playsInline preload="metadata" className="w-full h-full object-cover">
             Tu navegador no puede reproducir este video.
           </video>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-2 text-sm text-muted-foreground">
-            <AlertCircle className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden="true" />
-            <p>Si el video no reproduce en el navegador, podés descargarlo.</p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-2 text-xs sm:text-sm text-muted-foreground">
+            <AlertCircle className="size-4 sm:size-5 shrink-0 mt-0.5 text-accent" aria-hidden="true" />
+            <p className="text-xs sm:text-base leading-none sm:leading-tight">
+              Si el video no reproduce en el navegador, podés descargarlo.
+            </p>
           </div>
-          <Button size="lg" render={<a href={downloadUrl} /> } nativeButton={false}>
-            <Download aria-hidden="true" />
+          <Button size="lg" render={<a href={downloadUrl} /> } nativeButton={false} className="w-full sm:w-auto">
+            <Download className="size-5" aria-hidden="true" />
             Descargar video
           </Button>
         </div>
