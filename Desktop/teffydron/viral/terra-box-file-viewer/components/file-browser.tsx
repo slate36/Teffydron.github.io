@@ -474,25 +474,21 @@ export function FileBrowser({ files }: { files: BrowserFile[] }) {
             const Icon = iconFor(file)
             return (
               <li key={file.fsId} className="relative group">
-                {!file.isDir && (
-                  <>
-                    {file.shareHref ? (
-                      <QrDialogButton
-                        href={file.shareHref}
-                        title={file.name}
-                        kind={file.isDir ? 'folder' : 'video'}
-                        className="absolute top-2 right-2 z-10"
-                      />
-                    ) : (
-                      <QrDialogButton
-                        href={file.directHref || fileHref(file)}
-                        title={file.name}
-                        kind='video'
-                        className="absolute top-2 right-2 z-10"
-                      />
-                    )}
-                    <ShareMenu file={file} className="absolute top-2 right-8 z-10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </>
+                {!file.isDir && !file.shareHref && (
+                  <QrDialogButton
+                    href={file.directHref || fileHref(file)}
+                    title={file.name}
+                    kind='video'
+                    className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                  />
+                )}
+                {file.shareHref && (
+                  <QrDialogButton
+                    href={file.shareHref}
+                    title={file.name}
+                    kind='video'
+                    className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                  />
                 )}
                 <ItemLink
                   file={file}
@@ -523,13 +519,21 @@ export function FileBrowser({ files }: { files: BrowserFile[] }) {
                       <VpsCacheIndicator className="absolute top-2 left-2 z-10" />
                     )}
                   </div>
-                  <div className="flex flex-col gap-0.5 p-3">
+                  <div className="flex flex-col gap-2 p-3">
                     <span className="truncate text-sm font-medium" title={file.name}>
                       {file.name}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {file.isDir ? 'Carpeta' : formatSize(file.size)}
                     </span>
+                    {!file.isDir && (
+                      <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                        <ShareMenu
+                          file={file}
+                          className="flex-1 py-1.5 text-xs text-[#c5a059] hover:bg-white/10 hover:text-white border border-white/10 rounded flex items-center justify-center gap-1"
+                        />
+                      </div>
+                    )}
                   </div>
                 </ItemLink>
               </li>
