@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
-import { SiteNav } from '@/components/site-nav'
+import SiteNav from '@/components/site-nav'
 import { InteractiveDrone } from '@/components/interactive-drone'
 
 export function SiteHeader({
