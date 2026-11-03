@@ -386,9 +386,37 @@ export function VpsLibraryManager() {
         <h3 className="text-xl sm:text-2xl font-semibold">Subir archivos</h3>
         <p className="text-sm sm:text-base text-muted-foreground">Arrastrá archivos aquí o hacé clic para seleccionar</p>
         {selectedFiles.length > 0 && (
-          <p className="text-xs sm:text-sm text-primary/80 font-medium mb-2">
-            {selectedFiles.length} archivo(s) seleccionado(s)
-          </p>
+          <div className="flex flex-col gap-2">
+            <p className="text-xs sm:text-sm text-primary/80 font-medium mb-2">
+              {selectedFiles.length} archivo(s) seleccionado(s)
+            </p>
+            <div className="flex flex-wrap gap-2 max-w-full overflow-hidden">
+              {selectedFiles.map((file) => (
+                <div key={file.name} className="flex items-center gap-1 bg-primary/10 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-primary-foreground truncate max-w-[200px]">
+                  <span className="mr-1">{file.name}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedFiles((prev) => prev.filter((f) => f.name !== file.name))
+                    }}
+                    className="p-1 hover:text-primary-foreground/70"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+            <Button
+              size="lg"
+              variant="default"
+              className="w-full sm:w-auto mt-2 px-6"
+              onClick={() => void uploadFiles(selectedFiles)}
+            >
+              <Upload className="size-5 mr-2" />
+              Subir archivos
+            </Button>
+          </div>
         )}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto">
           <label
@@ -408,7 +436,6 @@ export function VpsLibraryManager() {
               const files = event.currentTarget.files
               if (files) {
                 setSelectedFiles(Array.from(files))
-                void uploadFiles(files)
               }
               event.currentTarget.value = ''
             }}
