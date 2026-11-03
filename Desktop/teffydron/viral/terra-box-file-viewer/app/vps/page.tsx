@@ -3,6 +3,7 @@ import { AlertCircle, Download } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { InvalidLink } from '@/components/invalid-link'
 import { Button } from '@/components/ui/button'
+import { ShareMenu } from '@/components/share-menu'
 import { getViewer } from '@/lib/viewer'
 import { getVpsLibraryFile } from '@/lib/vps-library'
 
@@ -50,6 +51,11 @@ export default async function VpsVideoPage({
             Descargar video
           </Button>
         </div>
+        <ShareMenu
+          url={`http://195.26.250.106/vps?path=${encodeURIComponent(path)}&userId=${encodeURIComponent(userId ?? '')}`}
+          title={file.name}
+          className="w-full sm:w-auto"
+        />
       </main>
     </div>
   )
