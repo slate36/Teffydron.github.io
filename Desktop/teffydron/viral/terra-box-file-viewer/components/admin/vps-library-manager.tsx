@@ -58,7 +58,7 @@ export function VpsLibraryManager() {
   const [newFolderName, setNewFolderName] = useState('')
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState('')
-  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({})
+  const [uploadStatus, setUploadStatus] = useState<Record<string, { progress: number; status: 'pending' | 'uploading' | 'done' | 'error' }>>({})
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -164,12 +164,19 @@ export function VpsLibraryManager() {
     if (!list.length) return
     setError('')
     setNotice('')
-    setUploadProgress({})
     setBusy(true)
+
+    const initialStatus: Record<string, { progress: number; status: 'pending' | 'uploading' | 'done' | 'error' }> = {}
+    for (const f of list) {
+      initialStatus[f.name] = { progress: 0, status: 'pending' }
+    }
+    setUploadStatus(initialStatus)
 
     for (let index = 0; index < list.length; index++) {
       const file = list[index]
       setUploading(`Subiendo ${index + 1} de ${list.length}: ${file.name}`)
+
+      setUploadStatus((prev) => ({ ...prev, [file.name]: { progress: 0, status: 'uploading' } }))
 
       try {
         const query = new URLSearchParams({ folder: currentPath, name: file.name, userId: userId ?? '' })
@@ -183,22 +190,30 @@ export function VpsLibraryManager() {
           xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
               const percent = Math.round((event.loaded / event.total) * 100)
-              setUploadProgress((prev) => ({ ...prev, [file.name]: percent }))
+              setUploadStatus((prev) => ({ ...prev, [file.name]: { progress: percent, status: 'uploading' as const } }))
             }
           }
 
           xhr.onload = () => {
-            setUploadProgress((prev) => ({ ...prev, [file.name]: 100 }))
+            setUploadStatus((prev) => ({ ...prev, [file.name]: { progress: 100, status: 'done' as const } }))
             if (xhr.status >= 200 && xhr.status < 300) {
               resolve()
             } else {
               const body = xhr.responseText
+              setUploadStatus((prev) => ({ ...prev, [file.name]: { progress: 0, status: 'error' as const } }))
               reject(new Error(body || `Error ${xhr.status} subiendo ${file.name}`))
             }
           }
 
-          xhr.onerror = () => reject(new Error(`Error de red subiendo ${file.name}`))
-          xhr.ontimeout = () => reject(new Error(`Tiempo agotado subiendo ${file.name}`))
+          xhr.onerror = () => {
+            setUploadStatus((prev) => ({ ...prev, [file.name]: { progress: 0, status: 'error' as const } }))
+            reject(new Error(`Error de red subiendo ${file.name}`))
+          }
+
+          xhr.ontimeout = () => {
+            setUploadStatus((prev) => ({ ...prev, [file.name]: { progress: 0, status: 'error' as const } }))
+            reject(new Error(`Tiempo agotado subiendo ${file.name}`))
+          }
 
           xhr.send(file)
         })
@@ -399,25 +414,30 @@ export function VpsLibraryManager() {
             ))}
           </select>
         </div>
-        {Object.keys(uploadProgress).length > 0 && (
+        {Object.keys(uploadStatus).length > 0 && (
           <div className="w-full space-y-3 mt-4">
-            {Object.entries(uploadProgress).map(([name, progress]) => (
+            {Object.entries(uploadStatus).map(([name, status]) => (
               <div key={name} className="flex flex-col gap-1">
                 <div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
                   <span className="truncate max-w-[60%]">{name}</span>
-                  <span>{progress}%</span>
+                  <span className={status.status === 'done' ? 'text-emerald-600' : status.status === 'error' ? 'text-destructive' : 'text-primary'}>
+                    {status.status === 'done' ? 'Listo' : status.status === 'error' ? 'Error' : `${status.progress}%`}
+                  </span>
                 </div>
                 <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-100"
-                    style={{ width: `${progress}%` }}
+                    className={cn(
+                      'h-full transition-all duration-200',
+                      status.status === 'done' ? 'bg-emerald-600' : status.status === 'error' ? 'bg-destructive' : 'bg-gradient-to-r from-primary to-accent',
+                    )}
+                    style={{ width: `${status.progress}%` }}
                   />
                 </div>
               </div>
             ))}
           </div>
         )}
-        {uploading && !Object.keys(uploadProgress).length && (
+        {uploading && Object.keys(uploadStatus).length === 0 && (
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-4">
             <LoaderCircle className="size-4 animate-spin" />
             {uploading}
