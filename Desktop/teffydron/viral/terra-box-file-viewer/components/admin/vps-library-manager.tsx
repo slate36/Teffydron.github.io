@@ -59,6 +59,7 @@ export function VpsLibraryManager() {
   const [busy, setBusy] = useState(false)
   const [uploading, setUploading] = useState('')
   const [uploadStatus, setUploadStatus] = useState<Record<string, { progress: number; status: 'pending' | 'uploading' | 'done' | 'error' }>>({})
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -229,6 +230,11 @@ export function VpsLibraryManager() {
     setUploading('')
     setBusy(false)
     setNotice(`${list.length} archivo(s) subido(s).`)
+    // Mantener barras visibles un momento para que se vea el estado 'Listo'
+    setTimeout(() => {
+      setUploadStatus({})
+      setSelectedFiles([])
+    }, 1500)
     try {
       await refresh()
     } catch (cause) {
@@ -379,6 +385,11 @@ export function VpsLibraryManager() {
         <Upload className="size-10 sm:size-12 mx-auto text-primary mb-2 sm:mb-3" />
         <h3 className="text-xl sm:text-2xl font-semibold">Subir archivos</h3>
         <p className="text-sm sm:text-base text-muted-foreground">Arrastrá archivos aquí o hacé clic para seleccionar</p>
+        {selectedFiles.length > 0 && (
+          <p className="text-xs sm:text-sm text-primary/80 font-medium mb-2">
+            {selectedFiles.length} archivo(s) seleccionado(s)
+          </p>
+        )}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto">
           <label className="flex items-center justify-center gap-2 w-full sm:w-auto flex-1 px-6 sm:px-8 py-3 sm:py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors cursor-pointer font-semibold text-sm sm:text-base">
             <Upload className="size-5 sm:size-6" />
@@ -391,7 +402,11 @@ export function VpsLibraryManager() {
             accept="video/*,image/*,audio/*"
             className="hidden"
             onChange={(event) => {
-              if (event.currentTarget.files) void uploadFiles(event.currentTarget.files)
+              const files = event.currentTarget.files
+              if (files) {
+                setSelectedFiles(Array.from(files))
+                void uploadFiles(files)
+              }
               event.currentTarget.value = ''
             }}
           />
