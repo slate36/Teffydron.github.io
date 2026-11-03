@@ -3,8 +3,9 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import SiteNav from '@/components/site-nav'
 import { InteractiveDrone } from '@/components/interactive-drone'
+import { getViewer } from '@/lib/viewer'
 
-export function SiteHeader({
+export default async function SiteHeader({
   title = 'Videoteca de Polo',
   subtitle = 'Archivo audiovisual y tomas aéreas exclusivas.',
   showDroneHero = false,
@@ -13,6 +14,7 @@ export function SiteHeader({
   subtitle?: string
   showDroneHero?: boolean
 }) {
+  const viewer = await getViewer().catch(() => null)
   const heroImage = '/images/polo-hero.png'
 
   return (
@@ -30,7 +32,7 @@ export function SiteHeader({
 
       <div className="mx-auto max-w-7xl px-4 pt-4">
         <div className="flex justify-end">
-          <SiteNav />
+          <SiteNav viewer={viewer} />
         </div>
 
         <div className="grid items-center gap-8 pb-10 pt-6 md:pb-14 lg:grid-cols-[1.1fr_0.9fr] lg:pt-8">

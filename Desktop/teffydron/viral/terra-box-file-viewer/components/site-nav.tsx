@@ -1,10 +1,7 @@
-'use client'
-
 import Link from 'next/link'
 import { useState } from 'react'
 import { Menu, X } from 'lucide-react'
 import { SignOutButton } from '@/components/sign-out-button'
-import { getViewer } from '@/lib/viewer'
 
 const links = [
   { href: '/', label: 'Inicio' },
@@ -18,14 +15,12 @@ const links = [
 const linkClass =
   'block rounded-md px-3 py-1.5 text-sm font-medium text-primary-foreground/85 transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground'
 
-export default function SiteNav() {
-  const [open, setOpen] = useState(false)
-  const [viewer, setViewer] = useState<{ id: string; handle: string } | null>(null)
+type SiteNavProps = {
+  viewer?: { id: string; handle: string } | null
+}
 
-  // Cargar viewer en el cliente
-  if (typeof window !== 'undefined') {
-    getViewer().then((v) => setViewer(v ?? null)).catch(() => setViewer(null))
-  }
+export default function SiteNav({ viewer }: SiteNavProps = {}) {
+  const [open, setOpen] = useState(false)
 
   return (
     <nav aria-label="Principal" className="flex items-center justify-end gap-1">
