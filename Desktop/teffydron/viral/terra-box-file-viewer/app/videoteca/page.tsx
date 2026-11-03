@@ -21,7 +21,8 @@ export const metadata: Metadata = {
 
 function normalizeDir(dir: string | string[] | undefined) {
   const value = Array.isArray(dir) ? dir[0] : dir
-  if (!value || !value.startsWith('/')) return '/'
+  if (!value) return '/'
+  if (!value.startsWith('/')) return `/__vps__/${value}`
   return value.replace(/\/+$/, '') || '/'
 }
 
