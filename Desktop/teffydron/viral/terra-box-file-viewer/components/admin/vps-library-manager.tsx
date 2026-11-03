@@ -391,25 +391,28 @@ export function VpsLibraryManager() {
           </p>
         )}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto">
-          <label className="relative inline-flex items-center justify-center gap-2 w-full sm:w-auto flex-1 px-6 sm:px-8 py-3 sm:py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors cursor-pointer font-semibold text-sm sm:text-base overflow-hidden">
+          <label
+            className="flex items-center justify-center gap-2 w-full sm:w-auto flex-1 px-6 sm:px-8 py-3 sm:py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors cursor-pointer font-semibold text-sm sm:text-base"
+            onClick={() => fileInput.current?.click()}
+          >
             <Upload className="size-5 sm:size-6" />
             {uploading || 'Seleccionar archivos'}
-            <input
-              ref={fileInput}
-              type="file"
-              multiple
-              accept="video/*,image/*,audio/*"
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-              onChange={(event) => {
-                const files = event.currentTarget.files
-                if (files) {
-                  setSelectedFiles(Array.from(files))
-                  void uploadFiles(files)
-                }
-                event.currentTarget.value = ''
-              }}
-            />
           </label>
+          <input
+            ref={fileInput}
+            type="file"
+            multiple
+            accept="video/*,image/*,audio/*"
+            className="hidden"
+            onChange={(event) => {
+              const files = event.currentTarget.files
+              if (files) {
+                setSelectedFiles(Array.from(files))
+                void uploadFiles(files)
+              }
+              event.currentTarget.value = ''
+            }}
+          />
           <select
             value={currentPath}
             onChange={(event) => setCurrentPath(event.target.value)}
