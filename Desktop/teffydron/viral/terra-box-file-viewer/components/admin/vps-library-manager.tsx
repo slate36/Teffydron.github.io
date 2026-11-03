@@ -61,15 +61,13 @@ export function VpsLibraryManager() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [userId, setUserId] = useState<string | null>(null)
   const [clipboard, setClipboard] = useState<ClipboardItem[]>([])
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; file: FileItem } | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
 
   async function refresh() {
-    const id = await getCurrentUserId()
-    setUserId(id ?? null)
-    const query = new URLSearchParams({ userId: id ?? '' })
+    const userId = await getCurrentUserId()
+    const query = new URLSearchParams({ userId: userId ?? '' })
     const response = await fetch(`/api/admin/library?${query}`, { cache: 'no-store' })
     const next = await readResponse(response) as Snapshot
     setSnapshot(next)
@@ -529,22 +527,10 @@ export function VpsLibraryManager() {
                 className="group relative rounded-2xl border-2 bg-amber-50/30 overflow-hidden transition-all hover:shadow-lg hover:border-amber-500/50 cursor-grab"
                 title="Video en caché de TeraBox · Arrastra a una carpeta para moverlo a tu biblioteca"
               >
-              <div className="aspect-video bg-amber-100/30 relative overflow-hidden">
-                  {userId && (
-                    <video
-                      src={`/api/library/file?path=${encodeURIComponent(file.path)}&userId=${encodeURIComponent(userId)}`}
-                      poster={`/api/library/file?path=${encodeURIComponent(file.path)}&userId=${encodeURIComponent(userId)}`}
-                      preload="metadata"
-                      playsInline
-                      muted
-                      className="size-full object-cover"
-                    />
-                  )}
-                  {!userId && (
-                    <div className="size-full flex items-center justify-center bg-amber-200/30">
-                      {getFileIcon(file.name)}
-                    </div>
-                  )}
+              <div className="aspect-video bg-amber-200/30 relative overflow-hidden flex items-center justify-center">
+                  <div className="text-amber-600">
+                    <Film className="size-12" />
+                  </div>
                 </div>
 
                 <div className="p-4">
