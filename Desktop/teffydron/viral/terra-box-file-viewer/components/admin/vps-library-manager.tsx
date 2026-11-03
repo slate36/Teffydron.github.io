@@ -396,7 +396,7 @@ export function VpsLibraryManager() {
             type="file"
             multiple
             accept="video/*,image/*,audio/*"
-            className="hidden"
+            className="sr-only"
             onChange={(event) => {
               if (event.currentTarget.files) void uploadFiles(event.currentTarget.files)
               event.currentTarget.value = ''
