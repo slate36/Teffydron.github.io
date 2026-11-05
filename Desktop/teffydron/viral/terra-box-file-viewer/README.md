@@ -16,7 +16,7 @@ Una aplicación Next.js para navegar y compartir archivos de TeraBox mediante c�
 
 - **Framework**: Next.js 16.4.3
 - **Lenguaje**: TypeScript
-- **Base de datos**: PostgreSQL con Drizzle ORM
+- **Base de datos**: SQLite con Drizzle ORM
 - **Autenticación**: better-auth
 - **UI**: shadcn/ui, Tailwind CSS v4
 - **Icons**: Lucide React
@@ -26,7 +26,6 @@ Una aplicación Next.js para navegar y compartir archivos de TeraBox mediante c�
 
 - Node.js 18+ instalado
 - pnpm instalado (`npm install -g pnpm`)
-- Base de datos PostgreSQL (local o en la nube)
 - Cuenta de TeraBox
 
 ## Instalación
@@ -49,7 +48,7 @@ cp .env.example .env.local
 
 Edita `.env.local` con tus valores:
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/terabox_viewer"
+DATABASE_URL="./local.db"
 TERABOX_NDUS="tu_cookie_ndus_aqui"
 BETTER_AUTH_URL="http://localhost:3000"
 ```
@@ -64,23 +63,9 @@ BETTER_AUTH_URL="http://localhost:3000"
 
 ## Configuración de la Base de Datos
 
-1. Crea la base de datos PostgreSQL:
-```sql
-CREATE DATABASE terabox_viewer;
-```
-
-2. Genera las migraciones:
+Genera las migraciones y crea la base de datos:
 ```bash
 pnpm db:generate
-```
-
-3. Ejecuta las migraciones:
-```bash
-pnpm db:migrate
-```
-
-O si prefieres usar `push` (para desarrollo):
-```bash
 pnpm db:push
 ```
 
@@ -100,6 +85,21 @@ pnpm db:migrate       # Ejecuta las migraciones pendientes
 pnpm db:push          # Envía el schema directamente a la BD (dev)
 pnpm db:studio        # Abre Drizzle Studio para visualizar la BD
 ```
+
+## Sincronización de videos en VPS
+
+En un VPS, el sincronizador puede recorrer diariamente las carpetas visibles de TeraBox y guardar los videos localmente. La reproducción usa la copia del servidor cuando está disponible y mantiene TeraBox como respaldo.
+
+- El navegador muestra ⚡ cuando el video ya está completo en el VPS y puede reproducirse desde la caché local. La marca aparece al volver a cargar la lista después de cada descarga.
+- Al guardar MP4/M4V/MOV, el sincronizador adelanta el índice del video cuando el archivo trae espacio reservado suficiente; así el reproductor puede leer los metadatos sin buscar al final del archivo. Para optimizar copias ya descargadas: `pnpm exec tsx scripts/optimize-video-cache.ts`.
+- El límite predeterminado es 70 GB; los videos pendientes se reintentan en la siguiente sincronización.
+- Las copias locales se conservan aunque el video se oculte o desaparezca de TeraBox.
+- El panel de administración muestra el espacio utilizado, los errores y una lista desplegable con el video en descarga y los que esperan su turno.
+- Para ejecutar una sincronización manual: `pnpm exec tsx scripts/sync-terabox.ts`.
+- En producción, configúrala como servicio/timer de systemd y define `VIDEO_CACHE_DIR` en `.env.production`. Revisa la salida con `journalctl -u teffydron-video-sync.service`.
+- El panel de administración permite crear y renombrar carpetas locales, subir varios videos, imágenes y audios, asignar portadas y mover archivos arrastrándolos a otra carpeta. El contenido se publica en la videoteca y comparte el límite de 70 GB con la caché de TeraBox.
+- En producción, define `VPS_LIBRARY_DIR` (por ejemplo, `/var/lib/teffydron/library`) en el servicio web, y permite escritura a esa ubicación en `ReadWritePaths` de ambos servicios systemd. Los endpoints de administración requieren rol admin.
+- La tabla de caché y el estado de sincronización se crean automáticamente al iniciar la aplicación.
 
 ## Estructura del Proyecto
 

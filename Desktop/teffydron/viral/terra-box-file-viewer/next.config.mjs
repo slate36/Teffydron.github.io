@@ -3,9 +3,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  experimental: {
-    serverComponentsExternalPackages: ['pg'],
-  },
+  serverExternalPackages: ['pg'],
+  allowedDevOrigins: ['tefydron.nexo-dev.com'],
 }
 
 export default nextConfig

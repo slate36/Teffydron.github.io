@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   FolderOpen, Eye, EyeOff, Pin, Users, Settings,
-  BarChart2, FileVideo, MessageSquare, Trash2, HardDrive,
+  BarChart2, FileVideo, MessageSquare, Trash2, HardDrive, Activity,
 } from 'lucide-react'
 import { SiteHeader } from '@/components/site-header'
 import { SignOutButton } from '@/components/sign-out-button'
@@ -88,6 +88,9 @@ export default async function AdminPage() {
               </Link>
               <Link href="/comunidad" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">
                 <MessageSquare className="size-4" /> Foro
+              </Link>
+              <Link href="/admin/analytics" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">
+                <Activity className="size-4" /> Analítica
               </Link>
             </div>
             <div className="p-2 border-t border-border">
