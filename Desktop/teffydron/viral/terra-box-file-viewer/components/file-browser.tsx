@@ -49,132 +49,205 @@ function iconFor(file: TeraboxFile) {
 
 function FolderDroneCard() {
   return (
-    <div className="relative size-full overflow-hidden bg-gradient-to-b from-[#113828] via-[#164532] to-[#0c241a] select-none">
-      {/* Patrón de césped cortado alternado típico de cancha de polo */}
-      <div
-        className="absolute inset-0 opacity-15 pointer-events-none"
-        style={{
-          backgroundImage:
-            'repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 18px, transparent 18px, transparent 36px)',
-        }}
-      />
+    <div className="relative size-full overflow-hidden bg-gradient-to-b from-[#0b2118] via-[#123626] to-[#071710] select-none">
+      {/* Sutil halo de luz cenital color champán */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_48%,rgba(197,160,89,0.16)_0%,transparent_70%)] pointer-events-none" />
 
-      {/* Iluminación cenital dorada */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(197,160,89,0.18)_0%,transparent_75%)]" />
-
-      {/* Emblema polista: Tacos cruzados, bocha de polo y retícula aérea */}
+      {/* Silueta ecuestre de polo estilo Ralph Lauren: Jinete y caballo a pleno galope */}
       <svg
-        viewBox="0 0 220 220"
-        className="relative h-full w-full p-2.5 sm:p-4 transition-transform duration-500 group-hover:scale-105"
+        viewBox="0 0 200 200"
+        className="relative h-full w-full p-2.5 sm:p-3.5 transition-transform duration-500 group-hover:scale-105"
         aria-hidden="true"
       >
         <defs>
-          {/* Gradiente dorado para tacos y marco */}
-          <linearGradient id="poloGold" x1="0%" y1="0%" x2="100%" y2="100%">
+          {/* Oro champán refinado y de alta gama */}
+          <linearGradient id="poloLuxuryGold" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#faecd0" />
-            <stop offset="45%" stopColor="#c5a059" />
-            <stop offset="100%" stopColor="#8d6b2c" />
+            <stop offset="40%" stopColor="#d8b25e" />
+            <stop offset="100%" stopColor="#9a7428" />
           </linearGradient>
 
-          {/* Gradiente de madera de tipa para la cabeza del mazo */}
-          <linearGradient id="malletWood" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#d9b36d" />
-            <stop offset="50%" stopColor="#8f632b" />
-            <stop offset="100%" stopColor="#5a3d16" />
-          </linearGradient>
-
-          {/* Gradiente esférico 3D para la bocha de polo */}
-          <radialGradient id="poloBall" cx="35%" cy="35%" r="65%">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="55%" stopColor="#eae6dc" />
-            <stop offset="85%" stopColor="#c2bab0" />
-            <stop offset="100%" stopColor="#8b8478" />
-          </radialGradient>
-
-          {/* Sombra para bocha y mazos */}
-          <filter id="poloShadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#000000" floodOpacity="0.55" />
+          {/* Sombra sutil para la silueta */}
+          <filter id="luxurySilhouetteShadow" x="-15%" y="-15%" width="130%" height="130%">
+            <feDropShadow dx="0" dy="2.5" stdDeviation="2.5" floodColor="#000000" floodOpacity="0.65" />
           </filter>
         </defs>
 
-        {/* 1. Líneas de cancha de polo y esquinas de mira aérea (dron) */}
-        <g stroke="#c5a059" strokeOpacity="0.35" fill="none">
-          <rect x="18" y="18" width="184" height="184" rx="10" strokeWidth="1" strokeDasharray="4 4" />
-          {/* Retícula de esquinas de cámara */}
-          <path d="M 28 40 L 28 28 L 40 28" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M 192 40 L 192 28 L 180 28" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M 28 180 L 28 192 L 40 192" strokeWidth="2.5" strokeLinecap="round" />
-          <path d="M 192 180 L 192 192 L 180 192" strokeWidth="2.5" strokeLinecap="round" />
+        {/* Marco minimalista con línea ultrafina dorada */}
+        <rect
+          x="10"
+          y="10"
+          width="180"
+          height="180"
+          rx="12"
+          fill="none"
+          stroke="#c5a059"
+          strokeWidth="0.8"
+          strokeOpacity="0.28"
+          strokeDasharray="3 3"
+        />
+        <circle
+          cx="100"
+          cy="98"
+          r="62"
+          fill="none"
+          stroke="#c5a059"
+          strokeWidth="0.6"
+          strokeOpacity="0.2"
+        />
+
+        {/* Silueta de Jugador de Polo y Caballo al Galope (Estilo Ecuestre Clásico) */}
+        <g fill="url(#poloLuxuryGold)" filter="url(#luxurySilhouetteShadow)">
+          {/* Cuerpo, cuello y cabeza del caballo de polo */}
+          <path d="
+            M 148 94
+            C 151 92, 155 93, 158 96
+            C 160 99, 158 102, 154 103
+            C 149 104, 143 103, 138 108
+            C 134 113, 130 119, 126 122
+            C 122 125, 115 125, 110 123
+            C 102 120, 96 119, 88 122
+            C 80 125, 75 130, 70 128
+            C 66 126, 65 120, 68 116
+            C 71 112, 77 109, 83 108
+            C 90 107, 98 108, 105 106
+            C 112 104, 118 99, 124 93
+            C 129 88, 133 84, 136 82
+            C 138 81, 141 83, 141 86
+            C 141 88, 143 89, 145 88
+            C 147 87, 148 89, 146 91
+            Z
+          " />
+          {/* Orejas alertas */}
+          <path d="M 141 83 L 143 77 L 145 84 Z" />
+          <path d="M 144 84 L 147 79 L 148 86 Z" />
+
+          {/* Cola atada clásica del caballo de polo argentino */}
+          <path d="
+            M 69 118
+            C 63 120, 56 125, 52 133
+            C 55 131, 60 127, 66 124
+            Z
+          " />
+
+          {/* Mano delantera extendida en galope */}
+          <path d="
+            M 130 118
+            C 136 124, 145 131, 154 135
+            C 156 136, 155 137, 153 138
+            C 144 134, 134 127, 126 120
+            Z
+          " />
+          {/* Mano delantera flexionada */}
+          <path d="
+            M 126 121
+            C 128 127, 129 133, 125 137
+            C 123 139, 120 137, 121 134
+            C 123 130, 123 125, 122 121
+            Z
+          " />
+
+          {/* Pata trasera extendida */}
+          <path d="
+            M 73 127
+            C 68 134, 60 141, 51 146
+            C 49 147, 49 146, 51 144
+            C 60 138, 68 131, 72 124
+            Z
+          " />
+          {/* Pata trasera flexionada */}
+          <path d="
+            M 78 125
+            C 76 131, 73 138, 70 144
+            C 69 145, 67 144, 68 142
+            C 71 136, 73 130, 75 125
+            Z
+          " />
+
+          {/* Jinete (Jugador de Polo) */}
+          {/* Casco con visera */}
+          <ellipse cx="106" cy="74" rx="5.5" ry="5" />
+          <path d="M 109 75 L 115 76 L 110 78 Z" />
+
+          {/* Torso inclinado atléticamente hacia adelante */}
+          <path d="
+            M 103 78
+            C 107 78, 112 80, 114 85
+            C 116 89, 114 96, 110 102
+            C 107 105, 102 107, 98 106
+            C 96 102, 97 93, 99 87
+            C 100 82, 101 78, 103 78
+            Z
+          " />
+
+          {/* Pierna en estribo */}
+          <path d="
+            M 103 103
+            C 104 109, 107 115, 110 119
+            C 111 121, 109 122, 107 121
+            C 104 116, 101 110, 100 105
+            Z
+          " />
+
+          {/* Brazo izquierdo llevando riendas */}
+          <path d="
+            M 109 84
+            C 115 87, 122 91, 127 94
+            L 125 96
+            C 120 93, 114 89, 108 86
+            Z
+          " />
+          <path d="M 126 95 C 133 97, 142 99, 149 101" fill="none" stroke="#d4af37" strokeWidth="0.9" />
+
+          {/* Brazo derecho alzando el taco de polo atrás en posición de tiro */}
+          <path d="
+            M 101 82
+            C 96 79, 89 77, 83 75
+            L 84 73
+            C 90 75, 97 78, 102 80
+            Z
+          " />
+          {/* Vara del taco de polo */}
+          <line x1="84" y1="74" x2="62" y2="46" stroke="#faecd0" strokeWidth="1.8" strokeLinecap="round" />
+          {/* Cabeza de madera del taco */}
+          <g transform="translate(62, 46) rotate(42)">
+            <rect x="-8" y="-2.5" width="16" height="5" rx="2" fill="#d4af37" stroke="#faecd0" strokeWidth="0.5" />
+          </g>
+
+          {/* Bocha de polo adelante en la cancha */}
+          <circle cx="165" cy="142" r="3.2" fill="#ffffff" />
+          <circle cx="173" cy="142" r="1.5" fill="#d4af37" opacity="0.6" />
         </g>
 
-        {/* 2. Escudo central heráldico */}
-        <g filter="url(#poloShadow)">
-          <circle cx="110" cy="110" r="56" fill="#0d261b" fillOpacity="0.88" stroke="url(#poloGold)" strokeWidth="1.5" />
-          <circle cx="110" cy="110" r="51" fill="none" stroke="#c5a059" strokeWidth="0.8" strokeOpacity="0.5" strokeDasharray="3 3" />
+        {/* Tipografía sobria y distinguida estilo club de polo */}
+        <text
+          x="100"
+          y="32"
+          fontFamily="'Playfair Display', Georgia, serif"
+          fontSize="8.5"
+          fontWeight="600"
+          fill="#e8d5aa"
+          letterSpacing="3.5"
+          textAnchor="middle"
+          opacity="0.85"
+        >
+          POLO CLUB
+        </text>
 
-          {/* 3. Tacos de polo cruzados (Mallets) */}
-          {/* Taco 1: Inferior izquierdo a superior derecho */}
-          <g>
-            <line x1="56" y1="164" x2="164" y2="56" stroke="url(#poloGold)" strokeWidth="3.5" strokeLinecap="round" />
-            {/* Empuñadura envuelta */}
-            <line x1="56" y1="164" x2="72" y2="148" stroke="#f4f1ea" strokeWidth="5" strokeLinecap="round" />
-            <line x1="57" y1="163" x2="60" y2="160" stroke="#c5a059" strokeWidth="4" />
-            {/* Cabeza cilíndrica de madera de polo */}
-            <g transform="translate(164, 56) rotate(45)">
-              <rect x="-14" y="-5" width="28" height="10" rx="3.5" fill="url(#malletWood)" stroke="#c5a059" strokeWidth="1" />
-              <line x1="0" y1="-5" x2="0" y2="5" stroke="#faecd0" strokeWidth="1" strokeOpacity="0.6" />
-            </g>
-          </g>
-
-          {/* Taco 2: Inferior derecho a superior izquierdo */}
-          <g>
-            <line x1="164" y1="164" x2="56" y2="56" stroke="url(#poloGold)" strokeWidth="3.5" strokeLinecap="round" />
-            {/* Empuñadura envuelta */}
-            <line x1="164" y1="164" x2="148" y2="148" stroke="#f4f1ea" strokeWidth="5" strokeLinecap="round" />
-            <line x1="163" y1="163" x2="160" y2="160" stroke="#c5a059" strokeWidth="4" />
-            {/* Cabeza cilíndrica */}
-            <g transform="translate(56, 56) rotate(-45)">
-              <rect x="-14" y="-5" width="28" height="10" rx="3.5" fill="url(#malletWood)" stroke="#c5a059" strokeWidth="1" />
-              <line x1="0" y1="-5" x2="0" y2="5" stroke="#faecd0" strokeWidth="1" strokeOpacity="0.6" />
-            </g>
-          </g>
-
-          {/* 4. Herradura / Corona ecuestre */}
-          <g fill="#c5a059" opacity="0.9">
-            <path d="M 104 80 C 103 72, 106 68, 110 68 C 114 68, 117 72, 116 80 L 113.5 80 C 114 74, 112 70.5, 110 70.5 C 108 70.5, 106 74, 106.5 80 Z" />
-            <circle cx="105" cy="79" r="0.9" fill="#0d261b" />
-            <circle cx="115" cy="79" r="0.9" fill="#0d261b" />
-            <circle cx="106" cy="74" r="0.9" fill="#0d261b" />
-            <circle cx="114" cy="74" r="0.9" fill="#0d261b" />
-          </g>
-
-          {/* 5. Bocha de Polo central */}
-          <ellipse cx="110" cy="115" rx="14" ry="4" fill="#000000" fillOpacity="0.4" />
-          <circle cx="110" cy="110" r="14" fill="url(#poloBall)" stroke="#ffffff" strokeWidth="1" />
-          <path d="M 104 105 A 7 7 0 0 1 113 115" fill="none" stroke="#b0a99c" strokeWidth="0.8" strokeLinecap="round" />
-          <path d="M 107 103 A 7 7 0 0 1 116 113" fill="none" stroke="#ffffff" strokeWidth="0.8" strokeLinecap="round" />
-        </g>
+        <text
+          x="100"
+          y="174"
+          fontFamily="'Playfair Display', Georgia, serif"
+          fontSize="8"
+          fontWeight="500"
+          fill="#c5a059"
+          letterSpacing="3"
+          textAnchor="middle"
+          opacity="0.9"
+        >
+          CARPETA
+        </text>
       </svg>
-
-      {/* Detalle superior: Distintivo de polo */}
-      <div className="absolute top-2 inset-x-2.5 flex items-center justify-between text-[9px] font-semibold uppercase tracking-[0.18em] text-[#e8d5aa]">
-        <span className="flex items-center gap-1 rounded bg-black/50 px-1.5 py-0.5 border border-[#c5a059]/30 backdrop-blur-xs">
-          <span className="size-1.5 rounded-full bg-[#c5a059] animate-pulse" />
-          Polo
-        </span>
-        <span className="text-white/60 text-[8px] tracking-widest font-mono">
-          Chukker
-        </span>
-      </div>
-
-      {/* Detalle inferior: Etiqueta de carpeta polera */}
-      <div className="absolute inset-x-2 bottom-2 flex items-center justify-center">
-        <div className="flex items-center gap-1.5 rounded-md border border-[#c5a059]/35 bg-[#0f281e]/90 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.22em] text-[#e8d5aa] backdrop-blur-sm shadow-sm">
-          <span className="text-[#c5a059] text-[8px]">★</span>
-          <span>Carpeta</span>
-          <span className="text-[#c5a059] text-[8px]">★</span>
-        </div>
-      </div>
     </div>
   )
 }
